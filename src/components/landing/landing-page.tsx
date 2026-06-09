@@ -22,6 +22,7 @@ import {
   Smartphone,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { NeonBackground } from "@/components/landing/neon-background"
 
 const navLinks = [
   { label: "Recursos", href: "#recursos" },
@@ -179,9 +180,10 @@ export function LandingPage() {
 
       <main className="flex-1">
         <section className="relative overflow-hidden pt-24 md:pt-32">
+          <NeonBackground />
           <div className="absolute inset-0 -z-10">
-            <div className="absolute -top-40 right-0 h-[500px] w-[500px] rounded-full bg-[var(--brand)]/5 blur-3xl" />
-            <div className="absolute -bottom-40 left-0 h-[400px] w-[400px] rounded-full bg-violet-500/5 blur-3xl" />
+            <div className="absolute -top-40 right-0 h-[500px] w-[500px] rounded-full bg-[var(--brand)]/10 blur-3xl" />
+            <div className="absolute -bottom-40 left-0 h-[400px] w-[400px] rounded-full bg-violet-500/10 blur-3xl" />
           </div>
 
           <div className="mx-auto max-w-7xl px-4 pb-20 md:px-6 md:pb-32">

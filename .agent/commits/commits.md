@@ -8,3 +8,4 @@
 | 4 | 2026-06-09 | 584291a | feat: landing page inspirada na Neon + animações e dark mode |
 | 5 | 2026-06-09 | f3862aa | chore: remove response_body.txt do tracking |
 | 6 | 2026-06-09 | 226607d | fix: middleware permite landing page + remove relations não definidas do auth |
+| 7 | 2026-06-09 | ${hash} | feat: animação de fundo Three.js (feixes neon) inspirada na Neon.com |
