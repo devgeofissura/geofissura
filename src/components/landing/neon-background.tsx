@@ -8,7 +8,7 @@ import * as THREE from "three"
 function buildStruct(
   w: number, h: number, d: number,
   floors: number, roof: boolean, cross: boolean,
-): { v: Float32Array; e: Uint16Array } {
+) {
   const verts: number[] = []
   const edges: number[] = []
   const nl = floors + 1
@@ -56,13 +56,12 @@ export function NeonBackground() {
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setSize(W, H)
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     el.appendChild(renderer.domElement)
 
     // ── Generate instances ────────────────────────────────────────
 
     const rng = (a: number, b: number) => a + Math.random() * (b - a)
-    const rand = Math.random
 
     interface Inst {
       struct: { v: Float32Array; e: Uint16Array }
@@ -74,12 +73,12 @@ export function NeonBackground() {
 
     const insts: Inst[] = []
     for (let i = 0; i < 30; i++) {
-      const big = rand() < 0.25
+      const big = Math.random() < 0.25
       const w = big ? rng(1.5, 2.5) : rng(0.5, 1.2)
       const h = big ? rng(2, 3.5) : rng(0.6, 1.8)
       const d = big ? rng(1, 2) : rng(0.3, 0.8)
       const fl = Math.max(1, Math.round(h / 0.7))
-      const struct = buildStruct(w, h, d, fl, rand() < 0.3, rand() < 0.35)
+      const struct = buildStruct(w, h, d, fl, Math.random() < 0.3, Math.random() < 0.35)
       insts.push({
         struct,
         x: rng(-7, 7), y: rng(-3.5, 2.5), z: rng(-5, 2),
@@ -88,12 +87,12 @@ export function NeonBackground() {
         rotSpeed: rng(-0.08, 0.08),
         phase: rng(0, Math.PI * 2),
         speed: rng(0.12, 0.3),
-        mouse: rand() < 0.35,
+        mouse: Math.random() < 0.35,
         spread: rng(3, 6),
       })
     }
 
-    // ── Build geometry buffers ──────────────────────────────────────
+    // ── Count totals ────────────────────────────────────────────────
 
     let totalVerts = 0
     let totalEdges = 0
@@ -102,13 +101,21 @@ export function NeonBackground() {
       totalEdges += inst.struct.e.length / 2
     }
 
-    // Unique-vertex buffers (shared by LineSegments index + Points)
-    const pos = new Float32Array(totalVerts * 3)
-    const col = new Float32Array(totalVerts * 3)
-    const idx = new Uint16Array(totalEdges * 2)
-    const soff = new Float32Array(totalVerts * 3)
-    const vtxInst = new Uint16Array(totalVerts)
-    const vtxLocal = new Uint16Array(totalVerts)
+    // ── Unique vertex arrays (Points geometry) ──────────────────────
+
+    const U = new Float32Array(totalVerts * 3) // unique positions
+    const C = new Float32Array(totalVerts * 3) // colors
+    const S = new Float32Array(totalVerts * 3) // scatter offsets
+    const VI = new Uint16Array(totalVerts)      // vertex → instance index
+    const VL = new Uint16Array(totalVerts)      // vertex → local index
+
+    // ── Edge expansion arrays (Lines geometry) ──────────────────────
+
+    const EP = new Uint16Array(totalEdges * 2) // edge → [vertexA, vertexB]
+    const LP = new Float32Array(totalEdges * 6) // line positions (expanded)
+    const LC = new Float32Array(totalEdges * 6) // line colors (expanded)
+
+    // ── Populate buffers ────────────────────────────────────────────
 
     let vo = 0
     let eo = 0
@@ -119,40 +126,66 @@ export function NeonBackground() {
       const ec = e.length / 2
 
       for (let j = 0; j < ec; j++) {
-        idx[(eo + j) * 2] = e[j * 2] + vo
-        idx[(eo + j) * 2 + 1] = e[j * 2 + 1] + vo
+        EP[(eo + j) * 2] = e[j * 2] + vo
+        EP[(eo + j) * 2 + 1] = e[j * 2 + 1] + vo
       }
 
       for (let j = 0; j < vc; j++) {
         const gp = (vo + j) * 3
-        const theta = rand() * Math.PI * 2
-        const phi = Math.acos(2 * rand() - 1)
-        const rad = inst.spread * Math.cbrt(rand())
-        soff[gp] = rad * Math.sin(phi) * Math.cos(theta)
-        soff[gp + 1] = rad * Math.sin(phi) * Math.sin(theta)
-        soff[gp + 2] = rad * Math.cos(phi)
-
-        const b = 0.6 + rand() * 0.4
-        col[gp] = 0
-        col[gp + 1] = 0.898 * b
-        col[gp + 2] = 0.6 * b
-
-        vtxInst[vo + j] = ii
-        vtxLocal[vo + j] = j
+        const theta = Math.random() * Math.PI * 2
+        const phi = Math.acos(2 * Math.random() - 1)
+        const rad = inst.spread * Math.cbrt(Math.random())
+        S[gp] = rad * Math.sin(phi) * Math.cos(theta)
+        S[gp + 1] = rad * Math.sin(phi) * Math.sin(theta)
+        S[gp + 2] = rad * Math.cos(phi)
+        const b = 0.6 + Math.random() * 0.4
+        C[gp] = 0
+        C[gp + 1] = 0.898 * b
+        C[gp + 2] = 0.6 * b
+        VI[vo + j] = ii
+        VL[vo + j] = j
       }
 
       vo += vc
       eo += ec
     }
 
-    // ── Three.js objects ────────────────────────────────────────────
+    // ── Set initial scattered positions ──────────────────────────────
 
-    const geom = new THREE.BufferGeometry()
-    geom.setAttribute("position", new THREE.BufferAttribute(pos, 3))
-    geom.setAttribute("color", new THREE.BufferAttribute(col, 3))
-    geom.setIndex(new THREE.BufferAttribute(idx, 1))
+    for (let i = 0; i < totalVerts; i++) {
+      const ii = VI[i]
+      const inst = insts[ii]
+      const gp = i * 3
+      U[gp] = inst.x + S[gp]
+      U[gp + 1] = inst.y + S[gp + 1]
+      U[gp + 2] = inst.z + S[gp + 2]
+    }
 
-    const lineMat = new THREE.LineBasicMaterial({
+    // ── Expand unique → line positions ───────────────────────────────
+
+    function expand() {
+      for (let k = 0; k < totalEdges; k++) {
+        const a = EP[k * 2], b = EP[k * 2 + 1]
+        const ap = a * 3, bp = b * 3, lp = k * 6
+        LP[lp] = U[ap]; LP[lp + 1] = U[ap + 1]; LP[lp + 2] = U[ap + 2]
+        LP[lp + 3] = U[bp]; LP[lp + 4] = U[bp + 1]; LP[lp + 5] = U[bp + 2]
+        LC[lp] = C[ap]; LC[lp + 1] = C[ap + 1]; LC[lp + 2] = C[ap + 2]
+        LC[lp + 3] = C[bp]; LC[lp + 4] = C[bp + 1]; LC[lp + 5] = C[bp + 2]
+      }
+    }
+    expand()
+
+    // ── Create Three.js objects ─────────────────────────────────────
+
+    const pg = new THREE.BufferGeometry()
+    pg.setAttribute("position", new THREE.BufferAttribute(U, 3))
+    pg.setAttribute("color", new THREE.BufferAttribute(C, 3))
+
+    const lg = new THREE.BufferGeometry()
+    lg.setAttribute("position", new THREE.BufferAttribute(LP, 3))
+    lg.setAttribute("color", new THREE.BufferAttribute(LC, 3))
+
+    const lm = new THREE.LineBasicMaterial({
       vertexColors: true,
       transparent: true,
       opacity: 0.4,
@@ -160,7 +193,7 @@ export function NeonBackground() {
       depthWrite: false,
     })
 
-    const pointMat = new THREE.PointsMaterial({
+    const pm = new THREE.PointsMaterial({
       size: 0.07,
       sizeAttenuation: true,
       vertexColors: true,
@@ -170,12 +203,10 @@ export function NeonBackground() {
       depthWrite: false,
     })
 
-    const lines = new THREE.LineSegments(geom, lineMat)
-    const points = new THREE.Points(geom, pointMat)
-    scene.add(lines)
-    scene.add(points)
+    scene.add(new THREE.LineSegments(lg, lm))
+    scene.add(new THREE.Points(pg, pm))
 
-    // ── Mouse parallax ──────────────────────────────────────────────
+    // ── Mouse ──────────────────────────────────────────────────────
 
     let mx = 0, my = 0, tmx = 0, tmy = 0
     const onPointer = (e: PointerEvent) => {
@@ -185,7 +216,7 @@ export function NeonBackground() {
     }
     window.addEventListener("pointermove", onPointer)
 
-    // ── Animation ───────────────────────────────────────────────────
+    // ── Animation ──────────────────────────────────────────────────
 
     let animId = 0
     const start = performance.now()
@@ -200,20 +231,15 @@ export function NeonBackground() {
       const mox = mx * 0.5
       const moy = -my * 0.3
 
-      const pa = geom.attributes.position as THREE.BufferAttribute
-      const arr = pa.array as Float32Array
-
       for (let i = 0; i < totalVerts; i++) {
-        const ii = vtxInst[i]
+        const ii = VI[i]
         const inst = insts[ii]
         const sv = inst.struct.v
-        const loc = vtxLocal[i]
+        const loc = VL[i]
 
         const t = (Math.sin(elapsed * inst.speed + inst.phase) + 1) * 0.5
-
         const angle = inst.rot0 + inst.rotSpeed * elapsed
-        const ca = Math.cos(angle)
-        const sa = Math.sin(angle)
+        const ca = Math.cos(angle), sa = Math.sin(angle)
 
         const lx = sv[loc * 3] * inst.scale
         const ly = sv[loc * 3 + 1] * inst.scale
@@ -225,16 +251,25 @@ export function NeonBackground() {
         const fz = lx * sa + lz * ca + inst.z
 
         const gp = i * 3
-        const sx = inst.x + soff[gp] + mox * mo
-        const sy = inst.y + soff[gp + 1] + moy * mo
-        const sz = inst.z + soff[gp + 2]
+        const sx = inst.x + S[gp] + mox * mo
+        const sy = inst.y + S[gp + 1] + moy * mo
+        const sz = inst.z + S[gp + 2]
 
-        arr[gp] = lerp(sx, fx, t)
-        arr[gp + 1] = lerp(sy, fy, t)
-        arr[gp + 2] = lerp(sz, fz, t)
+        U[gp] = lerp(sx, fx, t)
+        U[gp + 1] = lerp(sy, fy, t)
+        U[gp + 2] = lerp(sz, fz, t)
       }
 
-      pa.needsUpdate = true
+      for (let k = 0; k < totalEdges; k++) {
+        const a = EP[k * 2], b = EP[k * 2 + 1]
+        const ap = a * 3, bp = b * 3, lp = k * 6
+        LP[lp] = U[ap]; LP[lp + 1] = U[ap + 1]; LP[lp + 2] = U[ap + 2]
+        LP[lp + 3] = U[bp]; LP[lp + 4] = U[bp + 1]; LP[lp + 5] = U[bp + 2]
+      }
+
+      pg.attributes.position.needsUpdate = true
+      lg.attributes.position.needsUpdate = true
+
       renderer.render(scene, camera)
       animId = requestAnimationFrame(update)
     }
@@ -244,8 +279,7 @@ export function NeonBackground() {
     // ── Resize ──────────────────────────────────────────────────────
 
     const onResize = () => {
-      const w = el.clientWidth
-      const h = el.clientHeight
+      const w = el.clientWidth, h = el.clientHeight
       camera.aspect = w / h
       camera.updateProjectionMatrix()
       renderer.setSize(w, h)
@@ -258,9 +292,7 @@ export function NeonBackground() {
       window.removeEventListener("pointermove", onPointer)
       window.removeEventListener("resize", onResize)
       cancelAnimationFrame(animId)
-      geom.dispose()
-      lineMat.dispose()
-      pointMat.dispose()
+      pg.dispose(); lg.dispose(); lm.dispose(); pm.dispose()
       renderer.dispose()
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
     }
@@ -271,8 +303,7 @@ export function NeonBackground() {
       ref={root}
       className="absolute inset-0 -z-10"
       style={{
-        filter:
-          "drop-shadow(0 0 4px #00e59944) drop-shadow(0 0 12px #00e59922)",
+        filter: "drop-shadow(0 0 4px #00e59944) drop-shadow(0 0 12px #00e59922)",
       }}
     />
   )
