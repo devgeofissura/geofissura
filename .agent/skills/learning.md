@@ -107,3 +107,23 @@ src/
 8. Tema claro/escuro com next-themes, classes `dark:` do Tailwind
 9. Error handler padrão: `apiError()` no backend, `toast.error()` no frontend
 10. Feedback com Sonner toast para sucesso/erro
+
+## Banco de Dados
+
+**Neon PostgreSQL** — connection string em `variaveis.md` (ignorado no git).
+
+### Migrations
+```bash
+pnpm db:migrate    # Executa scripts SQL em ordem numérica
+pnpm db:seed       # Cria tenant, admin e dados de exemplo
+```
+
+### Seed (Desenvolvimento)
+- Tenant: Construtora ABC
+- Admin: admin@geofissuras.com / admin123
+- Edificação: Edifício Comercial ABC
+
+### Tabelas (Neon - sa-east-1)
+- `tenants`, `usuarios`, `edificacoes`, `entidades_da_edificacao`, `leituras`
+- Criadas via migration `0001_estrutura_inicial.sql`
+- Todas com `tenant_id`, índices e chaves estrangeiras
