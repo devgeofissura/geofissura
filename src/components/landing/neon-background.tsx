@@ -3,140 +3,245 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 
-const BEAM_COUNT = 400
-const SPREAD_X = 16
-const SPREAD_Z = 10
-const VERTICAL_RANGE = 24
+// ── Procedural structure generator ──────────────────────────────────
 
-type Beam = {
-  x: number
-  z: number
-  speed: number
-  length: number
-  phase: number
+function buildStruct(
+  w: number, h: number, d: number,
+  floors: number, roof: boolean, cross: boolean,
+): { v: Float32Array; e: Uint16Array } {
+  const verts: number[] = []
+  const edges: number[] = []
+  const nl = floors + 1
+  const fh = h / floors
+  for (let f = 0; f < nl; f++) {
+    const y = -h / 2 + f * fh
+    verts.push(-w / 2, y, -d / 2, w / 2, y, -d / 2, w / 2, y, d / 2, -w / 2, y, d / 2)
+  }
+  for (let f = 0; f < floors; f++) {
+    const i = f * 4
+    edges.push(i, i + 1, i + 1, i + 2, i + 2, i + 3, i + 3, i)
+    edges.push(i, i + 4, i + 1, i + 5, i + 2, i + 6, i + 3, i + 7)
+    if (cross) {
+      edges.push(i, i + 5, i + 1, i + 4, i + 2, i + 7, i + 3, i + 6)
+    }
+  }
+  const l = floors * 4
+  edges.push(l, l + 1, l + 1, l + 2, l + 2, l + 3, l + 3, l)
+  if (roof) {
+    const p = verts.length / 3
+    verts.push(0, h / 2 + h * 0.25, 0)
+    edges.push(p, l, p, l + 1, p, l + 2, p, l + 3)
+  }
+  return { v: new Float32Array(verts), e: new Uint16Array(edges) }
 }
 
+// ── Three.js component ──────────────────────────────────────────────
+
 export function NeonBackground() {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const root = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const el = containerRef.current
+    const el = root.current
     if (!el) return
 
-    const width = el.clientWidth
-    const height = el.clientHeight
+    const W = el.clientWidth
+    const H = el.clientHeight
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x030712)
 
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100)
+    const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 100)
     camera.position.set(0, 0.5, 16)
     camera.lookAt(0, 0, 0)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
-    renderer.setSize(width, height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setSize(W, H)
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
     el.appendChild(renderer.domElement)
 
-    const beams: Beam[] = []
-    for (let i = 0; i < BEAM_COUNT; i++) {
-      beams.push({
-        x: (Math.random() - 0.5) * SPREAD_X * 2,
-        z: (Math.random() - 0.5) * SPREAD_Z * 2 - 2,
-        speed: 0.03 + Math.random() * 0.1,
-        length: 0.6 + Math.random() * 2.0,
-        phase: Math.random() * Math.PI * 2,
+    // ── Generate instances ────────────────────────────────────────
+
+    const rng = (a: number, b: number) => a + Math.random() * (b - a)
+    const rand = Math.random
+
+    interface Inst {
+      struct: { v: Float32Array; e: Uint16Array }
+      x: number; y: number; z: number
+      scale: number; rot0: number; rotSpeed: number
+      phase: number; speed: number
+      mouse: boolean; spread: number
+    }
+
+    const insts: Inst[] = []
+    for (let i = 0; i < 30; i++) {
+      const big = rand() < 0.25
+      const w = big ? rng(1.5, 2.5) : rng(0.5, 1.2)
+      const h = big ? rng(2, 3.5) : rng(0.6, 1.8)
+      const d = big ? rng(1, 2) : rng(0.3, 0.8)
+      const fl = Math.max(1, Math.round(h / 0.7))
+      const struct = buildStruct(w, h, d, fl, rand() < 0.3, rand() < 0.35)
+      insts.push({
+        struct,
+        x: rng(-7, 7), y: rng(-3.5, 2.5), z: rng(-5, 2),
+        scale: rng(0.5, 1.0),
+        rot0: rng(0, Math.PI * 2),
+        rotSpeed: rng(-0.08, 0.08),
+        phase: rng(0, Math.PI * 2),
+        speed: rng(0.12, 0.3),
+        mouse: rand() < 0.35,
+        spread: rng(3, 6),
       })
     }
 
-    const vertCount = BEAM_COUNT * 2
-    const positions = new Float32Array(vertCount * 3)
-    const colors = new Float32Array(vertCount * 3)
+    // ── Build geometry buffers ──────────────────────────────────────
 
-    const bright: [number, number, number] = [0.0, 0.898, 0.6]
-    const dim: [number, number, number] = [0.0, 0.05, 0.03]
-
-    function buildGeometry(time: number) {
-      for (let i = 0; i < BEAM_COUNT; i++) {
-        const b = beams[i]
-        const yPos = ((time * b.speed + b.phase) % VERTICAL_RANGE) - VERTICAL_RANGE / 2
-        const h = b.length
-        const vi = i * 6
-        const ci = i * 6
-
-        positions[vi + 0] = b.x
-        positions[vi + 1] = yPos - h / 2
-        positions[vi + 2] = b.z
-        positions[vi + 3] = b.x
-        positions[vi + 4] = yPos + h / 2
-        positions[vi + 5] = b.z
-
-        colors[ci + 0] = bright[0]
-        colors[ci + 1] = bright[1]
-        colors[ci + 2] = bright[2]
-        colors[ci + 3] = dim[0]
-        colors[ci + 4] = dim[1]
-        colors[ci + 5] = dim[2]
-      }
+    let totalVerts = 0
+    let totalEdges = 0
+    for (const inst of insts) {
+      totalVerts += inst.struct.v.length / 3
+      totalEdges += inst.struct.e.length / 2
     }
 
-    buildGeometry(0)
+    // Unique-vertex buffers (shared by LineSegments index + Points)
+    const pos = new Float32Array(totalVerts * 3)
+    const col = new Float32Array(totalVerts * 3)
+    const idx = new Uint16Array(totalEdges * 2)
+    const soff = new Float32Array(totalVerts * 3)
+    const vtxInst = new Uint16Array(totalVerts)
+    const vtxLocal = new Uint16Array(totalVerts)
 
-    const geometry = new THREE.BufferGeometry()
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
-    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3))
+    let vo = 0
+    let eo = 0
+    for (let ii = 0; ii < insts.length; ii++) {
+      const inst = insts[ii]
+      const { v, e } = inst.struct
+      const vc = v.length / 3
+      const ec = e.length / 2
 
-    const material = new THREE.LineBasicMaterial({
+      for (let j = 0; j < ec; j++) {
+        idx[(eo + j) * 2] = e[j * 2] + vo
+        idx[(eo + j) * 2 + 1] = e[j * 2 + 1] + vo
+      }
+
+      for (let j = 0; j < vc; j++) {
+        const gp = (vo + j) * 3
+        const theta = rand() * Math.PI * 2
+        const phi = Math.acos(2 * rand() - 1)
+        const rad = inst.spread * Math.cbrt(rand())
+        soff[gp] = rad * Math.sin(phi) * Math.cos(theta)
+        soff[gp + 1] = rad * Math.sin(phi) * Math.sin(theta)
+        soff[gp + 2] = rad * Math.cos(phi)
+
+        const b = 0.6 + rand() * 0.4
+        col[gp] = 0
+        col[gp + 1] = 0.898 * b
+        col[gp + 2] = 0.6 * b
+
+        vtxInst[vo + j] = ii
+        vtxLocal[vo + j] = j
+      }
+
+      vo += vc
+      eo += ec
+    }
+
+    // ── Three.js objects ────────────────────────────────────────────
+
+    const geom = new THREE.BufferGeometry()
+    geom.setAttribute("position", new THREE.BufferAttribute(pos, 3))
+    geom.setAttribute("color", new THREE.BufferAttribute(col, 3))
+    geom.setIndex(new THREE.BufferAttribute(idx, 1))
+
+    const lineMat = new THREE.LineBasicMaterial({
       vertexColors: true,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.4,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
 
-    const mesh = new THREE.LineSegments(geometry, material)
-    scene.add(mesh)
+    const pointMat = new THREE.PointsMaterial({
+      size: 0.07,
+      sizeAttenuation: true,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
 
-    let mouseX = 0
-    let mouseY = 0
-    let targetMouseX = 0
-    let targetMouseY = 0
+    const lines = new THREE.LineSegments(geom, lineMat)
+    const points = new THREE.Points(geom, pointMat)
+    scene.add(lines)
+    scene.add(points)
 
-    const onMouseMove = (e: MouseEvent) => {
+    // ── Mouse parallax ──────────────────────────────────────────────
+
+    let mx = 0, my = 0, tmx = 0, tmy = 0
+    const onPointer = (e: PointerEvent) => {
       const rect = el.getBoundingClientRect()
-      targetMouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 2
-      targetMouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 2
+      tmx = ((e.clientX - rect.left) / rect.width - 0.5) * 2
+      tmy = ((e.clientY - rect.top) / rect.height - 0.5) * 2
     }
-    window.addEventListener("mousemove", onMouseMove)
+    window.addEventListener("pointermove", onPointer)
 
-    let animId: number
-    let elapsed = 0
+    // ── Animation ───────────────────────────────────────────────────
 
-    function animate() {
-      elapsed += 0.016
-      const t = elapsed * 0.35
+    let animId = 0
+    const start = performance.now()
 
-      mouseX += (targetMouseX - mouseX) * 0.05
-      mouseY += (targetMouseY - mouseY) * 0.05
-      camera.position.x = mouseX * 1.5
-      camera.position.y = -mouseY * 1.0
-      camera.lookAt(0, 0, 0)
+    function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
 
-      buildGeometry(t)
+    function update(now: number) {
+      const elapsed = (now - start) / 1000
 
-      const pos = geometry.attributes.position as THREE.BufferAttribute
-      pos.array.set(positions)
-      pos.needsUpdate = true
+      mx += (tmx - mx) * 0.05
+      my += (tmy - my) * 0.05
+      const mox = mx * 0.5
+      const moy = -my * 0.3
 
-      const col = geometry.attributes.color as THREE.BufferAttribute
-      col.array.set(colors)
-      col.needsUpdate = true
+      const pa = geom.attributes.position as THREE.BufferAttribute
+      const arr = pa.array as Float32Array
 
+      for (let i = 0; i < totalVerts; i++) {
+        const ii = vtxInst[i]
+        const inst = insts[ii]
+        const sv = inst.struct.v
+        const loc = vtxLocal[i]
+
+        const t = (Math.sin(elapsed * inst.speed + inst.phase) + 1) * 0.5
+
+        const angle = inst.rot0 + inst.rotSpeed * elapsed
+        const ca = Math.cos(angle)
+        const sa = Math.sin(angle)
+
+        const lx = sv[loc * 3] * inst.scale
+        const ly = sv[loc * 3 + 1] * inst.scale
+        const lz = sv[loc * 3 + 2] * inst.scale
+
+        const mo = inst.mouse ? 1 : 0
+        const fx = lx * ca - lz * sa + inst.x + mox * mo
+        const fy = ly + inst.y + moy * mo
+        const fz = lx * sa + lz * ca + inst.z
+
+        const gp = i * 3
+        const sx = inst.x + soff[gp] + mox * mo
+        const sy = inst.y + soff[gp + 1] + moy * mo
+        const sz = inst.z + soff[gp + 2]
+
+        arr[gp] = lerp(sx, fx, t)
+        arr[gp + 1] = lerp(sy, fy, t)
+        arr[gp + 2] = lerp(sz, fz, t)
+      }
+
+      pa.needsUpdate = true
       renderer.render(scene, camera)
-      animId = requestAnimationFrame(animate)
+      animId = requestAnimationFrame(update)
     }
 
-    animId = requestAnimationFrame(animate)
+    animId = requestAnimationFrame(update)
+
+    // ── Resize ──────────────────────────────────────────────────────
 
     const onResize = () => {
       const w = el.clientWidth
@@ -147,25 +252,27 @@ export function NeonBackground() {
     }
     window.addEventListener("resize", onResize)
 
+    // ── Cleanup ─────────────────────────────────────────────────────
+
     return () => {
-      window.removeEventListener("mousemove", onMouseMove)
+      window.removeEventListener("pointermove", onPointer)
       window.removeEventListener("resize", onResize)
       cancelAnimationFrame(animId)
-      geometry.dispose()
-      material.dispose()
+      geom.dispose()
+      lineMat.dispose()
+      pointMat.dispose()
       renderer.dispose()
-      if (el.contains(renderer.domElement)) {
-        el.removeChild(renderer.domElement)
-      }
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
     }
   }, [])
 
   return (
     <div
-      ref={containerRef}
+      ref={root}
       className="absolute inset-0 -z-10"
       style={{
-        filter: "drop-shadow(0 0 8px #00e59944) drop-shadow(0 0 24px #00e59922)",
+        filter:
+          "drop-shadow(0 0 4px #00e59944) drop-shadow(0 0 12px #00e59922)",
       }}
     />
   )
