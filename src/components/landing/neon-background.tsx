@@ -14,7 +14,6 @@ type Beam = {
   speed: number
   length: number
   phase: number
-  colorMix: number
 }
 
 export function NeonBackground() {
@@ -40,9 +39,6 @@ export function NeonBackground() {
     el.appendChild(renderer.domElement)
 
     const beams: Beam[] = []
-    const positions = new Float32Array(BEAM_COUNT * 2 * 3)
-    const alphas = new Float32Array(BEAM_COUNT * 2)
-
     for (let i = 0; i < BEAM_COUNT; i++) {
       beams.push({
         x: (Math.random() - 0.5) * SPREAD_X * 2,
@@ -50,19 +46,23 @@ export function NeonBackground() {
         speed: 0.03 + Math.random() * 0.1,
         length: 0.6 + Math.random() * 2.0,
         phase: Math.random() * Math.PI * 2,
-        colorMix: Math.random(),
       })
     }
 
-    function updateGeometry(time: number) {
-      const cGreen: [number, number, number] = [0.0, 0.898, 0.6]
-      const cBlue: [number, number, number] = [0.0, 0.639, 1.0]
+    const vertCount = BEAM_COUNT * 2
+    const positions = new Float32Array(vertCount * 3)
+    const colors = new Float32Array(vertCount * 3)
 
+    const bright: [number, number, number] = [0.0, 0.898, 0.6]
+    const dim: [number, number, number] = [0.0, 0.05, 0.03]
+
+    function buildGeometry(time: number) {
       for (let i = 0; i < BEAM_COUNT; i++) {
         const b = beams[i]
         const yPos = ((time * b.speed + b.phase) % VERTICAL_RANGE) - VERTICAL_RANGE / 2
         const h = b.length
         const vi = i * 6
+        const ci = i * 6
 
         positions[vi + 0] = b.x
         positions[vi + 1] = yPos - h / 2
@@ -71,41 +71,30 @@ export function NeonBackground() {
         positions[vi + 4] = yPos + h / 2
         positions[vi + 5] = b.z
 
-        alphas[i * 2 + 0] = 1.0
-        alphas[i * 2 + 1] = 0.0
+        colors[ci + 0] = bright[0]
+        colors[ci + 1] = bright[1]
+        colors[ci + 2] = bright[2]
+        colors[ci + 3] = dim[0]
+        colors[ci + 4] = dim[1]
+        colors[ci + 5] = dim[2]
       }
     }
 
-    updateGeometry(0)
+    buildGeometry(0)
 
     const geometry = new THREE.BufferGeometry()
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
-    geometry.setAttribute("aAlpha", new THREE.BufferAttribute(alphas, 1))
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3))
 
-    const material = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color(0x00e599) } },
-      vertexShader: `
-        attribute float aAlpha;
-        varying float vAlpha;
-        void main() {
-          vAlpha = aAlpha;
-          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          gl_Position = projectionMatrix * mvPosition;
-        }
-      `,
-      fragmentShader: `
-        varying float vAlpha;
-        uniform vec3 uColor;
-        void main() {
-          gl_FragColor = vec4(uColor, vAlpha * 0.6);
-        }
-      `,
+    const material = new THREE.LineBasicMaterial({
+      vertexColors: true,
       transparent: true,
+      opacity: 0.7,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
 
-    const mesh = new THREE.LineSegments(geometry, material as THREE.Material)
+    const mesh = new THREE.LineSegments(geometry, material)
     scene.add(mesh)
 
     let mouseX = 0
@@ -129,19 +118,19 @@ export function NeonBackground() {
 
       mouseX += (targetMouseX - mouseX) * 0.05
       mouseY += (targetMouseY - mouseY) * 0.05
-
       camera.position.x = mouseX * 1.5
       camera.position.y = -mouseY * 1.0
       camera.lookAt(0, 0, 0)
 
-      updateGeometry(t)
+      buildGeometry(t)
+
       const pos = geometry.attributes.position as THREE.BufferAttribute
       pos.array.set(positions)
       pos.needsUpdate = true
 
-      const alp = geometry.attributes.aAlpha as THREE.BufferAttribute
-      alp.array.set(alphas)
-      alp.needsUpdate = true
+      const col = geometry.attributes.color as THREE.BufferAttribute
+      col.array.set(colors)
+      col.needsUpdate = true
 
       renderer.render(scene, camera)
       animId = requestAnimationFrame(animate)
@@ -176,7 +165,7 @@ export function NeonBackground() {
       ref={containerRef}
       className="absolute inset-0 -z-10"
       style={{
-        filter: "drop-shadow(0 0 10px #00e59933) drop-shadow(0 0 30px #00e59911)",
+        filter: "drop-shadow(0 0 8px #00e59944) drop-shadow(0 0 24px #00e59922)",
       }}
     />
   )

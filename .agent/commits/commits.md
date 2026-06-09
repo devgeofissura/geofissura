@@ -10,3 +10,4 @@
 | 6 | 2026-06-09 | 226607d | fix: middleware permite landing page + remove relations não definidas do auth |
 | 7 | 2026-06-09 | ff6c9e9 | feat: animação de fundo Three.js (feixes neon) inspirada na Neon.com |
 | 8 | 2026-06-09 | 1073009 | fix: neon background reescrito com BufferGeometry ao invés de InstancedMesh |
+| 9 | 2026-06-09 | fab7e4b | fix: neon simplificado (LineSegments) + design hero: titulo menor, roxo→verde, branco |

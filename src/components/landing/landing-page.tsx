@@ -188,11 +188,6 @@ export function LandingPage() {
 
           <div className="mx-auto max-w-7xl px-4 pb-20 md:px-6 md:pb-32">
             <div className="mx-auto max-w-3xl text-center">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/70">
-                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Sistema em produção — 500+ edificações monitoradas
-              </div>
-
               <h1 className="text-3xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl">
                 Monitoramento inteligente de{" "}
                 <span className="gradient-text">edificações</span>
