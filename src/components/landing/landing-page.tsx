@@ -241,10 +241,43 @@ export function LandingPage() {
                   {[
                     { label: "Fissura #01", value: "2.4mm", status: "normal" },
                     { label: "Inclinação", value: "0.02°", status: "normal" },
-                    { label: "Umidade", value: "68%", status: "alerta" },
-                    { label: "Fissura #02", value: "3.1mm", status: "critico" },
                     { label: "Temperatura", value: "26°C", status: "normal" },
+                    { label: "Umidade", value: "68%", status: "alerta" },
                     { label: "Pressão", value: "1.02 bar", status: "normal" },
+                    { label: "Sismos", value: "10 / 0.01mm", status: "normal" },
+                  ].map((item) => (
+                    <div key={item.label} className="bg-[#0a0f1a] p-4 md:p-6">
+                      <p className="text-xs text-white/40">{item.label}</p>
+                      <p className="mt-1 text-2xl font-bold text-white md:text-3xl">{item.value}</p>
+                      <span
+                        className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          item.status === "normal"
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : item.status === "alerta"
+                              ? "bg-yellow-500/10 text-yellow-400"
+                              : "bg-red-500/10 text-red-400"
+                        }`}
+                      >
+                        <div
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            item.status === "normal"
+                              ? "bg-emerald-400"
+                              : item.status === "alerta"
+                                ? "bg-yellow-400"
+                                : "bg-red-400"
+                          }`}
+                        />
+                        {item.status === "normal" ? "Normal" : item.status === "alerta" ? "Alerta" : "Crítico"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-white/10 px-4 py-2">
+                  <span className="text-xs text-white/30">Demais sensores</span>
+                </div>
+                <div className="grid grid-cols-3 gap-px bg-white/10">
+                  {[
+                    { label: "Fissura #02", value: "3.1mm", status: "critico" },
                   ].map((item) => (
                     <div key={item.label} className="bg-[#0a0f1a] p-4 md:p-6">
                       <p className="text-xs text-white/40">{item.label}</p>
