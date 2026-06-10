@@ -3,34 +3,14 @@
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 
-function buildStruct(
-  w: number, h: number, d: number,
-  floors: number, roof: boolean, cross: boolean,
-) {
-  const verts: number[] = []
-  const edges: number[] = []
-  const nl = floors + 1
-  const fh = h / floors
-  for (let f = 0; f < nl; f++) {
-    const y = -h / 2 + f * fh
-    verts.push(-w / 2, y, -d / 2, w / 2, y, -d / 2, w / 2, y, d / 2, -w / 2, y, d / 2)
-  }
-  for (let f = 0; f < floors; f++) {
-    const i = f * 4
-    edges.push(i, i + 1, i + 1, i + 2, i + 2, i + 3, i + 3, i)
-    edges.push(i, i + 4, i + 1, i + 5, i + 2, i + 6, i + 3, i + 7)
-    if (cross) {
-      edges.push(i, i + 5, i + 1, i + 4, i + 2, i + 7, i + 3, i + 6)
-    }
-  }
-  const l = floors * 4
-  edges.push(l, l + 1, l + 1, l + 2, l + 2, l + 3, l + 3, l)
-  if (roof) {
-    const p = verts.length / 3
-    verts.push(0, h / 2 + h * 0.25, 0)
-    edges.push(p, l, p, l + 1, p, l + 2, p, l + 3)
-  }
-  return { v: new Float32Array(verts), e: new Uint16Array(edges) }
+const N = 280
+const CONNECT = 2.8
+const SX = 11, SY = 6, SZ = 5
+
+interface Pt {
+  bx: number; by: number; bz: number
+  s: number; b: number
+  f: Float32Array  // [f1x, p1x, f2x, p2x, f1y, p1y, f2y, p2y, f1z, p1z, f2z, p2z]
 }
 
 export function NeonBackground() {
@@ -43,8 +23,7 @@ export function NeonBackground() {
     const ctx: Record<string, any> = {}
 
     try {
-      const W = el.clientWidth
-      const H = el.clientHeight
+      const W = el.clientWidth, H = el.clientHeight
 
       const scene = new THREE.Scene()
       scene.background = new THREE.Color(0x030712)
@@ -59,166 +38,165 @@ export function NeonBackground() {
       el.appendChild(renderer.domElement)
       ctx.r = renderer
 
+      // ── Points ──
       const rng = (a: number, b: number) => a + Math.random() * (b - a)
 
-      const insts: Array<{
-        struct: { v: Float32Array; e: Uint16Array }
-        x: number; y: number; z: number
-        scale: number; rot0: number; rotSpeed: number
-        phase: number; speed: number
-        mouse: boolean; spread: number
-      }> = []
-
-      for (let i = 0; i < 28; i++) {
-        const big = Math.random() < 0.25
-        const w = big ? rng(1.5, 2.5) : rng(0.5, 1.2)
-        const h = big ? rng(2, 3.5) : rng(0.6, 1.8)
-        const d = big ? rng(1, 2) : rng(0.3, 0.8)
-        const fl = Math.max(1, Math.round(h / 0.7))
-        const struct = buildStruct(w, h, d, fl, Math.random() < 0.3, Math.random() < 0.35)
-        insts.push({
-          struct,
-          x: rng(-7, 7), y: rng(-3.5, 2.5), z: rng(-5, 2),
-          scale: rng(0.5, 1.0),
-          rot0: rng(0, Math.PI * 2),
-          rotSpeed: rng(-0.08, 0.08),
-          phase: rng(0, Math.PI * 2),
-          speed: rng(0.12, 0.3),
-          mouse: Math.random() < 0.35,
-          spread: rng(3, 6),
+      const pts: Pt[] = []
+      for (let i = 0; i < N; i++) {
+        const f = new Float32Array(12)
+        for (let j = 0; j < 12; j += 2) {
+          f[j] = rng(0.15, 0.5)    // frequency
+          f[j + 1] = rng(0, Math.PI * 2)  // phase
+        }
+        pts.push({
+          bx: rng(-SX, SX), by: rng(-SY, SY), bz: rng(-SZ, SZ),
+          s: rng(0.03, 0.12),
+          b: rng(0.5, 1.0),
+          f,
         })
       }
 
-      let totalVerts = 0
-      let totalEdges = 0
-      for (const inst of insts) {
-        totalVerts += inst.struct.v.length / 3
-        totalEdges += inst.struct.e.length / 2
+      const PP = new Float32Array(N * 3)
+      const PS = new Float32Array(N)
+      const PC = new Float32Array(N * 3)
+
+      for (let i = 0; i < N; i++) {
+        const p = pts[i]
+        PS[i] = p.s
+        const bi = p.b
+        PC[i * 3] = 0
+        PC[i * 3 + 1] = 0.898 * bi
+        PC[i * 3 + 2] = 0.6 * bi
       }
 
-      const U = new Float32Array(totalVerts * 3)
-      const C = new Float32Array(totalVerts * 3)
-      const S = new Float32Array(totalVerts * 3)
-      const VI = new Uint16Array(totalVerts)
-      const VL = new Uint16Array(totalVerts)
-      const EP = new Uint16Array(totalEdges * 2)
-      const LP = new Float32Array(totalEdges * 6)
-      const LC = new Float32Array(totalEdges * 6)
+      // ── Line buffers (pre-allocated for max possible connections) ──
+      const MAX_LINES = N * 4  // each point connects to ~4 others on average
+      const LP = new Float32Array(MAX_LINES * 6)
+      const LC = new Float32Array(MAX_LINES * 6)
+      let activeLines = 0
 
-      let vo = 0, eo = 0
-      for (let ii = 0; ii < insts.length; ii++) {
-        const inst = insts[ii]
-        const { v, e } = inst.struct
-        const vc = v.length / 3
-        const ec = e.length / 2
-        for (let j = 0; j < ec; j++) {
-          EP[(eo + j) * 2] = e[j * 2] + vo
-          EP[(eo + j) * 2 + 1] = e[j * 2 + 1] + vo
-        }
-        for (let j = 0; j < vc; j++) {
-          const gp = (vo + j) * 3
-          const theta = Math.random() * Math.PI * 2
-          const phi = Math.acos(2 * Math.random() - 1)
-          const rad = inst.spread * Math.cbrt(Math.random())
-          S[gp] = rad * Math.sin(phi) * Math.cos(theta)
-          S[gp + 1] = rad * Math.sin(phi) * Math.sin(theta)
-          S[gp + 2] = rad * Math.cos(phi)
-          const b = 0.6 + Math.random() * 0.4
-          C[gp] = 0; C[gp + 1] = 0.898 * b; C[gp + 2] = 0.6 * b
-          VI[vo + j] = ii; VL[vo + j] = j
-        }
-        vo += vc; eo += ec
-      }
-
-      for (let i = 0; i < totalVerts; i++) {
-        const ii = VI[i], inst = insts[ii], gp = i * 3
-        U[gp] = inst.x + S[gp]
-        U[gp + 1] = inst.y + S[gp + 1]
-        U[gp + 2] = inst.z + S[gp + 2]
-      }
-
-      for (let k = 0; k < totalEdges; k++) {
-        const a = EP[k * 2], b = EP[k * 2 + 1]
-        const ap = a * 3, bp = b * 3, dp = k * 6
-        LP[dp] = U[ap]; LP[dp + 1] = U[ap + 1]; LP[dp + 2] = U[ap + 2]
-        LP[dp + 3] = U[bp]; LP[dp + 4] = U[bp + 1]; LP[dp + 5] = U[bp + 2]
-        LC[dp] = C[ap]; LC[dp + 1] = C[ap + 1]; LC[dp + 2] = C[ap + 2]
-        LC[dp + 3] = C[bp]; LC[dp + 4] = C[bp + 1]; LC[dp + 5] = C[bp + 2]
-      }
-
+      // ── Geometries ──
       const pg = new THREE.BufferGeometry()
-      pg.setAttribute("position", new THREE.BufferAttribute(U, 3))
-      pg.setAttribute("color", new THREE.BufferAttribute(C, 3))
+      pg.setAttribute("position", new THREE.BufferAttribute(PP, 3))
+      pg.setAttribute("color", new THREE.BufferAttribute(PC, 3))
+
+      // Use a custom attribute for per-vertex size (PointsMaterial doesn't support per-vertex size natively)
+      // Instead, we'll use a uniform size for all points
+      // Actually, THREE.PointsMaterial doesn't support per-vertex sizes in the standard material
+      // We can use ShaderMaterial or just use a single size
+      // Let me use a single size for all points but vary brightness
 
       const lg = new THREE.BufferGeometry()
       lg.setAttribute("position", new THREE.BufferAttribute(LP, 3))
       lg.setAttribute("color", new THREE.BufferAttribute(LC, 3))
+      lg.setDrawRange(0, 0)
 
       const lm = new THREE.LineBasicMaterial({
-        vertexColors: true, transparent: true, opacity: 0.4,
+        vertexColors: true, transparent: true, opacity: 0.5,
         blending: THREE.AdditiveBlending, depthWrite: false,
       })
-      const pm = new THREE.PointsMaterial({
-        size: 0.07, sizeAttenuation: true, vertexColors: true,
-        transparent: true, opacity: 0.9,
-        blending: THREE.AdditiveBlending, depthWrite: false,
+      pg.setAttribute("size", new THREE.BufferAttribute(PS, 1))
+
+      const pm = new THREE.ShaderMaterial({
+        uniforms: { uPR: { value: Math.min(window.devicePixelRatio, 2) } },
+        vertexShader: `
+          attribute float size;
+          attribute vec3 color;
+          varying vec3 vColor;
+          void main() {
+            vColor = color;
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = size * (420.0 * uPR / -mv.z);
+            gl_Position = projectionMatrix * mv;
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vColor;
+          void main() {
+            float d = length(gl_PointCoord - vec2(0.5));
+            if (d > 0.5) discard;
+            float a = 1.0 - smoothstep(0.0, 0.5, d);
+            gl_FragColor = vec4(vColor, a * 0.85);
+          }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
       })
 
       scene.add(new THREE.LineSegments(lg, lm))
       scene.add(new THREE.Points(pg, pm))
-      ctx.pg = pg; ctx.lg = lg; ctx.lm = lm; ctx.pm = pm; ctx.scene = scene; ctx.camera = camera
+      ctx.pg = pg; ctx.lg = lg; ctx.lm = lm; ctx.pm = pm
 
+      // ── Mouse ──
       let mx = 0, my = 0, tmx = 0, tmy = 0
-      const onPointer = (e: PointerEvent) => {
+      window.addEventListener("pointermove", (e: PointerEvent) => {
         const rect = el.getBoundingClientRect()
         tmx = ((e.clientX - rect.left) / rect.width - 0.5) * 2
         tmy = ((e.clientY - rect.top) / rect.height - 0.5) * 2
-      }
-      window.addEventListener("pointermove", onPointer)
+      })
 
-      const start = performance.now()
+      // ── Temp arrays to avoid allocation in hot loop ──
+      const pos = new Float32Array(N * 3)
 
       const tick = () => {
-        const elapsed = (performance.now() - start) / 1000
+        const t = performance.now() / 1000
 
-        mx += (tmx - mx) * 0.05
-        my += (tmy - my) * 0.05
-        const mox = mx * 0.5
-        const moy = -my * 0.3
+        mx += (tmx - mx) * 0.04
+        my += (tmy - my) * 0.04
 
-        for (let i = 0; i < totalVerts; i++) {
-          const ii = VI[i]
-          const inst = insts[ii]
-          const sv = inst.struct.v
-          const loc = VL[i]
-          const t = (Math.sin(elapsed * inst.speed + inst.phase) + 1) * 0.5
-          const angle = inst.rot0 + inst.rotSpeed * elapsed
-          const ca = Math.cos(angle), sa = Math.sin(angle)
-          const lx = sv[loc * 3] * inst.scale
-          const ly = sv[loc * 3 + 1] * inst.scale
-          const lz = sv[loc * 3 + 2] * inst.scale
-          const mo = inst.mouse ? 1 : 0
-          const fx = lx * ca - lz * sa + inst.x + mox * mo
-          const fy = ly + inst.y + moy * mo
-          const fz = lx * sa + lz * ca + inst.z
-          const gp = i * 3
-          const sx = inst.x + S[gp] + mox * mo
-          const sy = inst.y + S[gp + 1] + moy * mo
-          const sz = inst.z + S[gp + 2]
-          U[gp] = sx + (fx - sx) * t
-          U[gp + 1] = sy + (fy - sy) * t
-          U[gp + 2] = sz + (fz - sz) * t
+        camera.position.x = mx * 0.8
+        camera.position.y = -my * 0.5
+        camera.lookAt(0, 0, 0)
+
+        // Update point positions with organic motion
+        for (let i = 0; i < N; i++) {
+          const p = pts[i]
+          const f = p.f
+          const pi = i * 3
+          const x = p.bx + Math.sin(t * f[0] + f[1]) * 0.3 + Math.sin(t * f[2] + f[3]) * 0.2
+          const y = p.by + Math.sin(t * f[4] + f[5]) * 0.3 + Math.sin(t * f[6] + f[7]) * 0.2
+          const z = p.bz + Math.sin(t * f[8] + f[9]) * 0.3 + Math.sin(t * f[10] + f[11]) * 0.2
+          PP[pi] = x; PP[pi + 1] = y; PP[pi + 2] = z
+          pos[pi] = x; pos[pi + 1] = y; pos[pi + 2] = z
         }
 
-        for (let k = 0; k < totalEdges; k++) {
-          const a = EP[k * 2], b = EP[k * 2 + 1]
-          const ap = a * 3, bp = b * 3, dp = k * 6
-          LP[dp] = U[ap]; LP[dp + 1] = U[ap + 1]; LP[dp + 2] = U[ap + 2]
-          LP[dp + 3] = U[bp]; LP[dp + 4] = U[bp + 1]; LP[dp + 5] = U[bp + 2]
+        // Build connections based on distance
+        let li = 0
+        const cd2 = CONNECT * CONNECT
+
+        for (let i = 0; i < N && li < MAX_LINES; i++) {
+          const ix = pos[i * 3], iy = pos[i * 3 + 1], iz = pos[i * 3 + 2]
+          const ic = i * 3
+
+          for (let j = i + 1; j < N && li < MAX_LINES; j++) {
+            const dx = ix - pos[j * 3]
+            const dy = iy - pos[j * 3 + 1]
+            const dz = iz - pos[j * 3 + 2]
+            const d2 = dx * dx + dy * dy + dz * dz
+
+            if (d2 < cd2) {
+              const jc = j * 3
+              const alpha = 1 - Math.sqrt(d2) / CONNECT
+              const lp = li * 6
+              LP[lp] = ix; LP[lp + 1] = iy; LP[lp + 2] = iz
+              LP[lp + 3] = pos[j * 3]; LP[lp + 4] = pos[j * 3 + 1]; LP[lp + 5] = pos[j * 3 + 2]
+              // Colors with distance-based alpha
+              LC[lp] = PC[ic] * alpha; LC[lp + 1] = PC[ic + 1] * alpha; LC[lp + 2] = PC[ic + 2] * alpha
+              LC[lp + 3] = PC[jc] * alpha; LC[lp + 4] = PC[jc + 1] * alpha; LC[lp + 5] = PC[jc + 2] * alpha
+              li++
+            }
+          }
         }
+        activeLines = li
 
         pg.attributes.position.needsUpdate = true
+        lg.attributes.position.array.set(LP)
         lg.attributes.position.needsUpdate = true
+        lg.attributes.color.array.set(LC)
+        lg.attributes.color.needsUpdate = true
+        lg.setDrawRange(0, activeLines * 2)
+
         renderer.render(scene, camera)
         ctx.id = requestAnimationFrame(tick)
       }
@@ -238,9 +216,7 @@ export function NeonBackground() {
     return () => {
       try { cancelAnimationFrame(ctx.id) } catch {}
       try { ctx.pg?.dispose(); ctx.lg?.dispose(); ctx.lm?.dispose(); ctx.pm?.dispose() } catch {}
-      try {
-        if (ctx.r) { ctx.r.dispose(); if (el.contains(ctx.r.domElement)) el.removeChild(ctx.r.domElement) }
-      } catch {}
+      try { if (ctx.r) { ctx.r.dispose(); if (el.contains(ctx.r.domElement)) el.removeChild(ctx.r.domElement) } } catch {}
     }
   }, [])
 
