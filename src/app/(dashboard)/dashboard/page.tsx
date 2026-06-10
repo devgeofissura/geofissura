@@ -24,7 +24,7 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-sm text-[var(--text-secondary)]">
-          Bem-vindo ao GeoFissuras
+          Bem-vindo ao GeoFissura
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">

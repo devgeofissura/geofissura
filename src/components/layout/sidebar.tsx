@@ -62,7 +62,7 @@ export function Sidebar() {
       <div className="flex h-14 items-center border-b border-[var(--border)] px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg">
           <Building2 className="h-5 w-5 text-[var(--brand)]" />
-          GeoFissuras
+          GeoFissura
         </Link>
       </div>
       <nav className="flex-1 space-y-1 p-4">

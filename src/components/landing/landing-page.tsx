@@ -104,7 +104,7 @@ export function LandingPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand)]">
               <Building2 className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-bold">GeoFissuras</span>
+            <span className="text-lg font-bold">GeoFissura</span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -429,7 +429,7 @@ export function LandingPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand)]">
                   <Building2 className="h-4 w-4 text-white" />
                 </div>
-                <span className="text-lg font-bold">GeoFissuras</span>
+                <span className="text-lg font-bold">GeoFissura</span>
               </div>
               <p className="mt-4 max-w-md text-sm text-[var(--text-secondary)]">
                 Plataforma de monitoramento inteligente de edificações. Soluções
@@ -454,7 +454,7 @@ export function LandingPage() {
             </div>
           </div>
           <div className="mt-12 border-t border-[var(--border)] pt-8 text-center text-sm text-[var(--text-secondary)]">
-            <p>&copy; {new Date().getFullYear()} GeoFissuras. Todos os direitos reservados.</p>
+            <p>&copy; {new Date().getFullYear()} GeoFissura. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
