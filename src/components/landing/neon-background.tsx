@@ -20,7 +20,7 @@ export function NeonBackground() {
       c.position.z = 5
 
       ctx.r = new THREE.WebGLRenderer({ antialias: true })
-      ctx.r.setSize(el.clientWidth, el.clientHeight)
+      ctx.r.setSize(el.clientWidth, el.clientHeight, true)
       el.appendChild(ctx.r.domElement)
       ctx.c = c; ctx.s = s
 
@@ -52,5 +52,5 @@ export function NeonBackground() {
     }
   }, [])
 
-  return <div ref={root} className="absolute inset-0 -z-10" />
+  return <div ref={root} className="absolute inset-0" style={{ border: "1px solid red" }} />
 }

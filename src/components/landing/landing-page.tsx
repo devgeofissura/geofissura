@@ -181,12 +181,12 @@ export function LandingPage() {
       <main className="flex-1">
         <section className="relative min-h-[600px] overflow-hidden bg-[#030712] pt-24 md:pt-32">
           <NeonBackground />
-          <div className="absolute inset-0 -z-10">
+          <div className="absolute inset-0">
             <div className="absolute -top-40 right-0 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-3xl" />
             <div className="absolute -bottom-40 left-0 h-[400px] w-[400px] rounded-full bg-emerald-500/10 blur-3xl" />
           </div>
 
-          <div className="mx-auto max-w-7xl px-4 pb-20 md:px-6 md:pb-32">
+          <div className="relative z-10 mx-auto max-w-7xl px-4 pb-20 md:px-6 md:pb-32">
             <div className="mx-auto max-w-3xl text-center">
               <h1 className="text-3xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl">
                 Monitoramento inteligente de{" "}
