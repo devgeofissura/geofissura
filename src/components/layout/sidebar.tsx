@@ -18,37 +18,37 @@ const NAV_ITENS = [
     titulo: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["ADMIN", "USER", "VIEWER"],
+    roles: ["SUPER", "ADMIN", "USER", "VIEWER"],
   },
   {
     titulo: "Edificações",
     href: "/edificacoes",
     icon: Building2,
-    roles: ["ADMIN", "USER", "VIEWER"],
+    roles: ["SUPER", "ADMIN", "USER", "VIEWER"],
   },
   {
     titulo: "Entidades",
     href: "/entidades",
     icon: Users,
-    roles: ["ADMIN", "USER", "VIEWER"],
+    roles: ["SUPER", "ADMIN", "USER", "VIEWER"],
   },
   {
     titulo: "Leituras",
     href: "/leituras",
     icon: Activity,
-    roles: ["ADMIN", "USER", "VIEWER"],
+    roles: ["SUPER", "ADMIN", "USER", "VIEWER"],
   },
   {
     titulo: "Relatórios",
     href: "/relatorios",
     icon: FileText,
-    roles: ["ADMIN", "USER"],
+    roles: ["SUPER", "ADMIN", "USER"],
   },
   {
     titulo: "Administração",
     href: "/admin",
     icon: Settings,
-    roles: ["ADMIN"],
+    roles: ["SUPER", "ADMIN"],
   },
 ]
 
