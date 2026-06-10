@@ -244,7 +244,7 @@ export function LandingPage() {
                     { label: "Temperatura", value: "26°C", status: "normal" },
                     { label: "Umidade", value: "68%", status: "alerta" },
                     { label: "Pressão", value: "1.02 bar", status: "normal" },
-                    { label: "Sismos", value: "10 / 0.01mm", status: "normal" },
+                    { label: "Sismos", value: "0.2mm/s", status: "normal" },
                   ].map((item) => (
                     <div key={item.label} className="bg-[#0a0f1a] p-4 md:p-6">
                       <p className="text-xs text-white/40">{item.label}</p>
@@ -278,6 +278,8 @@ export function LandingPage() {
                 <div className="grid grid-cols-3 gap-px bg-white/10">
                   {[
                     { label: "Fissura #02", value: "3.1mm", status: "critico" },
+                    { label: "Fissura #03", value: "1.8mm", status: "alerta" },
+                    { label: "Fissura #04", value: "0.7mm", status: "normal" },
                   ].map((item) => (
                     <div key={item.label} className="bg-[#0a0f1a] p-4 md:p-6">
                       <p className="text-xs text-white/40">{item.label}</p>
