@@ -27,7 +27,7 @@ import { NeonBackground } from "@/components/landing/neon-background"
 const navLinks = [
   { label: "Recursos", href: "#recursos" },
   { label: "Como Funciona", href: "#como-funciona" },
-  { label: "Preços", href: "#precos" },
+  { label: "Planos", href: "#planos" },
   { label: "Contato", href: "#contato" },
 ]
 
@@ -67,18 +67,18 @@ const features = [
 const steps = [
   {
     num: "01",
-    title: "Conecte os Sensores",
-    description: "Instale os sensores IoT nas fissuras e pontos críticos da edificação.",
+    title: "Instalação dos Dispositivos",
+    description: "Nossa equipe instala os sensores IoT nas fissuras e pontos críticos da sua edificação.",
   },
   {
     num: "02",
-    title: "Configure Alertas",
-    description: "Defina limites de segurança por tipo de medição e receba notificações automáticas.",
+    title: "Monitoramento Contínuo",
+    description: "Cada dispositivo monitora em tempo real e envia dados automaticamente para a plataforma.",
   },
   {
     num: "03",
-    title: "Acompanhe em Tempo Real",
-    description: "Monitore dados, gere relatórios e tome decisões baseadas em evidências.",
+    title: "Pague por Dispositivo",
+    description: "Você paga apenas pelos dispositivos instalados e monitorados, sem planos ou assinaturas fixas.",
   },
 ]
 
@@ -132,12 +132,12 @@ export function LandingPage() {
 
             <div className="hidden items-center gap-2 md:flex">
               <Link href="/login">
-                <Button variant="ghost" size="sm">
+                <Button variant="outline" size="sm" className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950">
                   Entrar
                 </Button>
               </Link>
               <Link href="/login">
-                <Button size="sm">Começar Grátis</Button>
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">Solicitar Orçamento</Button>
               </Link>
             </div>
 
@@ -165,12 +165,12 @@ export function LandingPage() {
               ))}
               <div className="mt-4 flex flex-col gap-2">
                 <Link href="/login">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950">
                     Entrar
                   </Button>
                 </Link>
                 <Link href="/login">
-                  <Button className="w-full">Começar Grátis</Button>
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">Solicitar Orçamento</Button>
                 </Link>
               </div>
             </nav>
@@ -201,13 +201,13 @@ export function LandingPage() {
 
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link href="/login">
-                  <Button size="lg" className="w-full sm:w-auto">
-                    Começar Grátis
+                  <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white sm:w-auto">
+                    Solicitar Orçamento
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href="#recursos">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 sm:w-auto">
                     Ver Recursos
                   </Button>
                 </Link>
@@ -215,15 +215,15 @@ export function LandingPage() {
 
               <div className="mt-12 flex items-center justify-center gap-8 text-sm text-[var(--text-secondary)]">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  Sem instalação
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  Dispositivos instalados in loco
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  Trial grátis
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  Pagamento por dispositivo
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                   Suporte 24/7
                 </span>
               </div>
@@ -355,19 +355,19 @@ export function LandingPage() {
                 <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-white/5" />
               </div>
               <h2 className="text-3xl font-bold text-white md:text-4xl">
-                Comece a monitorar hoje
+        Monitore suas edificações
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
-                Cadastre-se gratuitamente e comece a proteger suas edificações
-                com monitoramento inteligente.
+        Instalamos nossos dispositivos IoT nas suas edificações.
+        Você paga apenas por dispositivo monitorado, sem surpresas.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link href="/login">
                   <Button
                     size="lg"
-                    className="w-full bg-white text-[var(--brand)] hover:bg-white/90 sm:w-auto"
+                    className="w-full bg-white text-emerald-700 hover:bg-white/90 sm:w-auto"
                   >
-                    Criar Conta Gratuita
+                    Solicitar Orçamento
                     <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
                 </Link>
@@ -406,7 +406,7 @@ export function LandingPage() {
               <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
                 <li><Link href="#recursos" className="hover:text-[var(--text-primary)]">Recursos</Link></li>
                 <li><Link href="#como-funciona" className="hover:text-[var(--text-primary)]">Como Funciona</Link></li>
-                <li><Link href="#precos" className="hover:text-[var(--text-primary)]">Preços</Link></li>
+                <li><Link href="#planos" className="hover:text-[var(--text-primary)]">Planos</Link></li>
               </ul>
             </div>
             <div>
