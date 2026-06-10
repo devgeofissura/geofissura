@@ -136,9 +136,9 @@ export function LandingPage() {
                   Entrar
                 </Button>
               </Link>
-              <Link href="/login">
+              <a href="https://wa.me/5511971878811" target="_blank" rel="noopener noreferrer">
                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">Solicitar Orçamento</Button>
-              </Link>
+              </a>
             </div>
 
             <button
@@ -169,9 +169,9 @@ export function LandingPage() {
                     Entrar
                   </Button>
                 </Link>
-                <Link href="/login">
+                <a href="https://wa.me/5511971878811" target="_blank" rel="noopener noreferrer">
                   <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">Solicitar Orçamento</Button>
-                </Link>
+                </a>
               </div>
             </nav>
           </div>
@@ -200,12 +200,12 @@ export function LandingPage() {
               </p>
 
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link href="/login">
+                <a href="https://wa.me/5511971878811" target="_blank" rel="noopener noreferrer">
                   <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white sm:w-auto">
                     Solicitar Orçamento
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                </Link>
+                </a>
                 <Link href="#recursos">
                   <Button variant="outline" size="lg" className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 sm:w-auto">
                     Ver Recursos
@@ -397,7 +397,7 @@ export function LandingPage() {
         Você paga por dispositivo instalado por mês + plano de dados na nuvem.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link href="/login">
+                <a href="https://wa.me/5511971878811" target="_blank" rel="noopener noreferrer">
                   <Button
                     size="lg"
                     className="w-full bg-white text-emerald-700 hover:bg-white/90 sm:w-auto"
@@ -405,7 +405,7 @@ export function LandingPage() {
                     Solicitar Orçamento
                     <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
-                </Link>
+                </a>
                 <Link href="#contato">
                   <Button
                     variant="outline"
