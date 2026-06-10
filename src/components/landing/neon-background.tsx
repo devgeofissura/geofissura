@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react"
 import * as THREE from "three"
 
 const N = 280
-const CONNECT = 2.8
-const SX = 11, SY = 6, SZ = 5
+const CONNECT = 4.5
+const SX = 24, SY = 14, SZ = 10
 
 interface Pt {
   bx: number; by: number; bz: number
@@ -69,8 +69,8 @@ export function NeonBackground() {
         PC[i * 3 + 2] = 0.6 * bi
       }
 
-      // ── Line buffers (pre-allocated for max possible connections) ──
-      const MAX_LINES = N * 4  // each point connects to ~4 others on average
+      // ── Line buffers ──
+      const MAX_LINES = N * 6
       const LP = new Float32Array(MAX_LINES * 6)
       const LC = new Float32Array(MAX_LINES * 6)
       let activeLines = 0
@@ -79,12 +79,6 @@ export function NeonBackground() {
       const pg = new THREE.BufferGeometry()
       pg.setAttribute("position", new THREE.BufferAttribute(PP, 3))
       pg.setAttribute("color", new THREE.BufferAttribute(PC, 3))
-
-      // Use a custom attribute for per-vertex size (PointsMaterial doesn't support per-vertex size natively)
-      // Instead, we'll use a uniform size for all points
-      // Actually, THREE.PointsMaterial doesn't support per-vertex sizes in the standard material
-      // We can use ShaderMaterial or just use a single size
-      // Let me use a single size for all points but vary brightness
 
       const lg = new THREE.BufferGeometry()
       lg.setAttribute("position", new THREE.BufferAttribute(LP, 3))
@@ -161,27 +155,49 @@ export function NeonBackground() {
           pos[pi] = x; pos[pi + 1] = y; pos[pi + 2] = z
         }
 
-        // Build connections based on distance
-        let li = 0
+        // Build connections — fase 1: nearest neighbor (garante zero retas desconexas)
+        const edgeSet = new Set<string>()
         const cd2 = CONNECT * CONNECT
+        let li = 0
 
         for (let i = 0; i < N && li < MAX_LINES; i++) {
+          let minD2 = Infinity, minJ = -1
           const ix = pos[i * 3], iy = pos[i * 3 + 1], iz = pos[i * 3 + 2]
-          const ic = i * 3
-
-          for (let j = i + 1; j < N && li < MAX_LINES; j++) {
-            const dx = ix - pos[j * 3]
-            const dy = iy - pos[j * 3 + 1]
-            const dz = iz - pos[j * 3 + 2]
+          for (let j = 0; j < N; j++) {
+            if (i === j) continue
+            const dx = ix - pos[j * 3], dy = iy - pos[j * 3 + 1], dz = iz - pos[j * 3 + 2]
             const d2 = dx * dx + dy * dy + dz * dz
+            if (d2 < minD2) { minD2 = d2; minJ = j }
+          }
+          const key = i < minJ ? `${i},${minJ}` : `${minJ},${i}`
+          if (!edgeSet.has(key)) {
+            edgeSet.add(key)
+            const dist = Math.sqrt(minD2)
+            const alpha = Math.max(0.06, 1 - dist / 22)
+            const lp = li * 6, ic = i * 3, jc = minJ * 3
+            LP[lp] = ix; LP[lp + 1] = iy; LP[lp + 2] = iz
+            LP[lp + 3] = pos[minJ * 3]; LP[lp + 4] = pos[minJ * 3 + 1]; LP[lp + 5] = pos[minJ * 3 + 2]
+            LC[lp] = PC[ic] * alpha; LC[lp + 1] = PC[ic + 1] * alpha; LC[lp + 2] = PC[ic + 2] * alpha
+            LC[lp + 3] = PC[jc] * alpha; LC[lp + 4] = PC[jc + 1] * alpha; LC[lp + 5] = PC[jc + 2] * alpha
+            li++
+          }
+        }
 
+        // Fase 2: conexões extras por proximidade
+        for (let i = 0; i < N && li < MAX_LINES; i++) {
+          const ix = pos[i * 3], iy = pos[i * 3 + 1], iz = pos[i * 3 + 2]
+          for (let j = i + 1; j < N && li < MAX_LINES; j++) {
+            const key = `${i},${j}`
+            if (edgeSet.has(key)) continue
+            const dx = ix - pos[j * 3], dy = iy - pos[j * 3 + 1], dz = iz - pos[j * 3 + 2]
+            const d2 = dx * dx + dy * dy + dz * dz
             if (d2 < cd2) {
-              const jc = j * 3
-              const alpha = 1 - Math.sqrt(d2) / CONNECT
-              const lp = li * 6
+              edgeSet.add(key)
+              const dist = Math.sqrt(d2)
+              const alpha = 1 - dist / CONNECT
+              const lp = li * 6, ic = i * 3, jc = j * 3
               LP[lp] = ix; LP[lp + 1] = iy; LP[lp + 2] = iz
               LP[lp + 3] = pos[j * 3]; LP[lp + 4] = pos[j * 3 + 1]; LP[lp + 5] = pos[j * 3 + 2]
-              // Colors with distance-based alpha
               LC[lp] = PC[ic] * alpha; LC[lp + 1] = PC[ic + 1] * alpha; LC[lp + 2] = PC[ic + 2] * alpha
               LC[lp + 3] = PC[jc] * alpha; LC[lp + 4] = PC[jc + 1] * alpha; LC[lp + 5] = PC[jc + 2] * alpha
               li++
