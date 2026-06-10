@@ -78,7 +78,7 @@ const steps = [
   {
     num: "03",
     title: "Pague por Dispositivo",
-    description: "Você paga apenas pelos dispositivos instalados e monitorados, sem planos ou assinaturas fixas.",
+    description: "Você paga por dispositivo instalado mensalmente + plano de dados na nossa nuvem. Sem surpresas.",
   },
 ]
 
@@ -220,7 +220,7 @@ export function LandingPage() {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  Pagamento por dispositivo
+                  Pagamento mensal por dispositivo
                 </span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -394,7 +394,7 @@ export function LandingPage() {
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
         Instalamos nossos dispositivos IoT nas suas edificações.
-        Você paga apenas por dispositivo monitorado, sem surpresas.
+        Você paga por dispositivo instalado por mês + plano de dados na nuvem.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link href="/login">
