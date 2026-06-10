@@ -179,7 +179,7 @@ export function LandingPage() {
       </header>
 
       <main className="flex-1">
-        <section className="relative overflow-hidden bg-[#030712] pt-24 md:pt-32">
+        <section className="relative min-h-[600px] overflow-hidden bg-[#030712] pt-24 md:pt-32">
           <NeonBackground />
           <div className="absolute inset-0 -z-10">
             <div className="absolute -top-40 right-0 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-3xl" />
