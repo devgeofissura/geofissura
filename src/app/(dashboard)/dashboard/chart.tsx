@@ -57,8 +57,8 @@ export function ReadingsChart({ data, sensorNomes }: { data: Leitura[]; sensorNo
                 dataKey={`v${sid}`}
                 stroke={cores[i % cores.length]}
                 strokeWidth={2}
-                dot={false}
-                connectNulls={false}
+                dot={{ r: 3, fill: cores[i % cores.length] }}
+                connectNulls={true}
                 name={String(sid)}
               />
             ))}
