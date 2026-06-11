@@ -67,8 +67,8 @@ pnpm dev
 
 | Papel | Email | Senha |
 |-------|-------|-------|
-| Super Admin | devtiagoabreu@gmail.com | Estoicismo&70x7 |
-| Admin | admin@geofissuras.com | admin123 |
+| Super Admin | admin@geofissuras.com | admin123 |
+| Usuário Teste | user@geofissura.com.br | 123456 |
 
 ## Estrutura
 

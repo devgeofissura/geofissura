@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/tenant"
 import { eq, and } from "drizzle-orm"
 import { apiError } from "@/lib/api-error"
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await auth()
-    if (!session?.user?.tenantId) {
+    const { session, tenantId, isSuper } = await getSession()
+    if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
+    const conditions = [eq(edificacoes.id, Number(params.id))]
+    if (!isSuper) conditions.push(eq(edificacoes.tenantId, tenantId!))
     const dado = await db.query.edificacoes.findFirst({
-      where: and(
-        eq(edificacoes.id, Number(params.id)),
-        eq(edificacoes.tenantId, session.user.tenantId),
-      ),
+      where: and(...conditions),
     })
 
     if (!dado) {
@@ -31,20 +30,17 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await auth()
-    if (!session?.user?.tenantId) {
+    const { session, tenantId, isSuper } = await getSession()
+    if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
     const body = await req.json()
+    const updConditions = [eq(edificacoes.id, Number(params.id))]
+    if (!isSuper) updConditions.push(eq(edificacoes.tenantId, tenantId!))
     const [atualizado] = await db.update(edificacoes)
       .set(body)
-      .where(
-        and(
-          eq(edificacoes.id, Number(params.id)),
-          eq(edificacoes.tenantId, session.user.tenantId),
-        ),
-      )
+      .where(and(...updConditions))
       .returning()
 
     return NextResponse.json(atualizado)
@@ -55,18 +51,15 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await auth()
-    if (!session?.user?.tenantId) {
+    const { session, tenantId, isSuper } = await getSession()
+    if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
+    const delConditions = [eq(edificacoes.id, Number(params.id))]
+    if (!isSuper) delConditions.push(eq(edificacoes.tenantId, tenantId!))
     await db.delete(edificacoes)
-      .where(
-        and(
-          eq(edificacoes.id, Number(params.id)),
-          eq(edificacoes.tenantId, session.user.tenantId),
-        ),
-      )
+      .where(and(...delConditions))
 
     return NextResponse.json({ ok: true })
   } catch (err) {

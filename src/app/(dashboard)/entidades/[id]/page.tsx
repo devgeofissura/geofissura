@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/tenant"
 import { db } from "@/lib/db"
 import { entidadesDaEdificacao } from "@/lib/db/schema/entidades-da-edificacao"
 import { leituras } from "@/lib/db/schema/leituras"
@@ -10,28 +10,24 @@ interface Props {
 }
 
 export default async function EntidadeDetalhePage({ params }: Props) {
-  const session = await auth()
-  if (!session?.user?.tenantId) {
+  const { session, tenantId, isSuper } = await getSession()
+  if (!session) {
     return <p>Não autorizado</p>
   }
 
+  const conditions1 = [eq(entidadesDaEdificacao.id, Number(params.id))]
+  if (!isSuper) conditions1.push(eq(entidadesDaEdificacao.tenantId, tenantId!))
   const entidade = await db.query.entidadesDaEdificacao.findFirst({
-    where: and(
-      eq(entidadesDaEdificacao.id, Number(params.id)),
-      eq(entidadesDaEdificacao.tenantId, session.user.tenantId),
-    ),
+    where: and(...conditions1),
   })
 
   if (!entidade) notFound()
 
+  const conditions2 = [eq(leituras.entidadeId, entidade.id)]
+  if (!isSuper) conditions2.push(eq(leituras.tenantId, tenantId!))
   const ultimasLeituras = await db.select()
     .from(leituras)
-    .where(
-      and(
-        eq(leituras.entidadeId, entidade.id),
-        eq(leituras.tenantId, session.user.tenantId),
-      ),
-    )
+    .where(and(...conditions2))
     .limit(20)
 
   return (

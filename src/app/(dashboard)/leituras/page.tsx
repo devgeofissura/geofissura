@@ -1,17 +1,19 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/tenant"
 import { db } from "@/lib/db"
 import { leituras } from "@/lib/db/schema/leituras"
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 
 export default async function LeiturasPage() {
-  const session = await auth()
-  if (!session?.user?.tenantId) {
+  const { session, tenantId, isSuper } = await getSession()
+  if (!session) {
     return <p>Não autorizado</p>
   }
 
+  const conditions = []
+  if (!isSuper) conditions.push(eq(leituras.tenantId, tenantId!))
   const lista = await db.select()
     .from(leituras)
-    .where(eq(leituras.tenantId, session.user.tenantId))
+    .where(and(...conditions))
     .limit(50)
 
   return (

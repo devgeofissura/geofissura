@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { leituras } from "@/lib/db/schema/leituras"
-import { auth } from "@/lib/auth"
-import { eq } from "drizzle-orm"
+import { getSession } from "@/lib/tenant"
+import { eq, and } from "drizzle-orm"
 import { apiError } from "@/lib/api-error"
 
 export async function GET() {
   try {
-    const session = await auth()
-    if (!session?.user?.tenantId) {
+    const { session, tenantId, isSuper } = await getSession()
+    if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
+    const conditions = []
+    if (!isSuper) conditions.push(eq(leituras.tenantId, tenantId!))
     const dados = await db.select()
       .from(leituras)
-      .where(eq(leituras.tenantId, session.user.tenantId))
+      .where(and(...conditions))
       .limit(50)
 
     return NextResponse.json(dados)

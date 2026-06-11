@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/tenant"
 import { db } from "@/lib/db"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
 import { entidadesDaEdificacao } from "@/lib/db/schema/entidades-da-edificacao"
@@ -10,28 +10,24 @@ interface Props {
 }
 
 export default async function EdificacaoDetalhePage({ params }: Props) {
-  const session = await auth()
-  if (!session?.user?.tenantId) {
+  const { session, tenantId, isSuper } = await getSession()
+  if (!session) {
     return <p>Não autorizado</p>
   }
 
+  const conditions1 = [eq(edificacoes.id, Number(params.id))]
+  if (!isSuper) conditions1.push(eq(edificacoes.tenantId, tenantId!))
   const edificacao = await db.query.edificacoes.findFirst({
-    where: and(
-      eq(edificacoes.id, Number(params.id)),
-      eq(edificacoes.tenantId, session.user.tenantId),
-    ),
+    where: and(...conditions1),
   })
 
   if (!edificacao) notFound()
 
+  const conditions2 = [eq(entidadesDaEdificacao.edificacaoId, edificacao.id)]
+  if (!isSuper) conditions2.push(eq(entidadesDaEdificacao.tenantId, tenantId!))
   const entidades = await db.select()
     .from(entidadesDaEdificacao)
-    .where(
-      and(
-        eq(entidadesDaEdificacao.edificacaoId, edificacao.id),
-        eq(entidadesDaEdificacao.tenantId, session.user.tenantId),
-      ),
-    )
+    .where(and(...conditions2))
 
   return (
     <div className="space-y-6">

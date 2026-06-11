@@ -1,20 +1,22 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/tenant"
 import { db } from "@/lib/db"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 
 export default async function EdificacoesPage() {
-  const session = await auth()
-  if (!session?.user?.tenantId) {
+  const { session, tenantId, isSuper } = await getSession()
+  if (!session) {
     return <p>Não autorizado</p>
   }
 
+  const conditions = []
+  if (!isSuper) conditions.push(eq(edificacoes.tenantId, tenantId!))
   const lista = await db.select()
     .from(edificacoes)
-    .where(eq(edificacoes.tenantId, session.user.tenantId))
+    .where(and(...conditions))
 
   return (
     <div className="space-y-6">

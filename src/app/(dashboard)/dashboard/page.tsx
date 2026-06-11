@@ -1,22 +1,26 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/tenant"
 import { db } from "@/lib/db"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
 import { leituras } from "@/lib/db/schema/leituras"
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 
 export default async function DashboardPage() {
-  const session = await auth()
-  if (!session?.user?.tenantId) {
+  const { session, tenantId, isSuper } = await getSession()
+  if (!session) {
     return <p>Não autorizado</p>
   }
 
+  const conditions1 = []
+  if (!isSuper) conditions1.push(eq(edificacoes.tenantId, tenantId!))
   const totalEdificacoes = await db.select({ count: edificacoes.id })
     .from(edificacoes)
-    .where(eq(edificacoes.tenantId, session.user.tenantId))
+    .where(and(...conditions1))
 
+  const conditions2 = []
+  if (!isSuper) conditions2.push(eq(leituras.tenantId, tenantId!))
   const ultimasLeituras = await db.select()
     .from(leituras)
-    .where(eq(leituras.tenantId, session.user.tenantId))
+    .where(and(...conditions2))
     .limit(10)
 
   return (

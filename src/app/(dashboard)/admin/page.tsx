@@ -1,10 +1,10 @@
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/tenant"
 import { redirect } from "next/navigation"
 
 export default async function AdminPage() {
-  const session = await auth()
+  const { session, role } = await getSession()
 
-  if (session?.user?.role !== "ADMIN" && session?.user?.role !== "SUPER") {
+  if (role !== "ADMIN" && role !== "SUPER") {
     redirect("/dashboard")
   }
 
