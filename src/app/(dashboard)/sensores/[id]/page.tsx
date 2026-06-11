@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/tenant"
 import { db } from "@/lib/db"
-import { entidadesDaEdificacao } from "@/lib/db/schema/entidades-da-edificacao"
+import { sensores } from "@/lib/db/schema/sensores"
 import { leituras } from "@/lib/db/schema/leituras"
 import { eq, and } from "drizzle-orm"
 import { notFound } from "next/navigation"
@@ -9,21 +9,21 @@ interface Props {
   params: { id: string }
 }
 
-export default async function EntidadeDetalhePage({ params }: Props) {
+export default async function SensorDetalhePage({ params }: Props) {
   const { session, tenantId, isSuper } = await getSession()
   if (!session) {
     return <p>Não autorizado</p>
   }
 
-  const conditions1 = [eq(entidadesDaEdificacao.id, Number(params.id))]
-  if (!isSuper) conditions1.push(eq(entidadesDaEdificacao.tenantId, tenantId!))
-  const entidade = await db.query.entidadesDaEdificacao.findFirst({
+  const conditions1 = [eq(sensores.id, Number(params.id))]
+  if (!isSuper) conditions1.push(eq(sensores.tenantId, tenantId!))
+  const sensor = await db.query.sensores.findFirst({
     where: and(...conditions1),
   })
 
-  if (!entidade) notFound()
+  if (!sensor) notFound()
 
-  const conditions2 = [eq(leituras.entidadeId, entidade.id)]
+  const conditions2 = [eq(leituras.sensorId, sensor.id)]
   if (!isSuper) conditions2.push(eq(leituras.tenantId, tenantId!))
   const ultimasLeituras = await db.select()
     .from(leituras)
@@ -34,20 +34,20 @@ export default async function EntidadeDetalhePage({ params }: Props) {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <span className="rounded bg-[var(--brand)]/10 px-2 py-0.5 text-xs font-medium text-[var(--brand)]">
-          {entidade.tipoEntidade}
+          {sensor.tipoSensor}
         </span>
         <div>
-          <h1 className="text-2xl font-bold">{entidade.nome}</h1>
-          {entidade.descricao && (
-            <p className="text-sm text-[var(--text-secondary)]">{entidade.descricao}</p>
+          <h1 className="text-2xl font-bold">{sensor.nome}</h1>
+          {sensor.descricao && (
+            <p className="text-sm text-[var(--text-secondary)]">{sensor.descricao}</p>
           )}
         </div>
       </div>
 
-      {hasDados(entidade.dados) && (
+      {hasDados(sensor.dados) && (
         <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm">
           <h2 className="text-sm font-medium text-[var(--text-secondary)] mb-2">Dados Adicionais</h2>
-          <pre className="text-sm">{JSON.stringify(entidade.dados, null, 2)}</pre>
+          <pre className="text-sm">{JSON.stringify(sensor.dados, null, 2)}</pre>
         </div>
       )}
 

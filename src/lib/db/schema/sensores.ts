@@ -2,11 +2,11 @@ import { pgTable, serial, varchar, integer, timestamp, text, jsonb } from "drizz
 import { tenants } from "./tenants"
 import { edificacoes } from "./edificacoes"
 
-export const entidadesDaEdificacao = pgTable("entidades_da_edificacao", {
+export const sensores = pgTable("sensores", {
   id: serial("id").primaryKey(),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
   edificacaoId: integer("edificacao_id").notNull().references(() => edificacoes.id, { onDelete: "cascade" }),
-  tipoEntidade: varchar("tipo_entidade", { length: 50 }).notNull(),
+  tipoSensor: varchar("tipo_sensor", { length: 50 }).notNull(),
   nome: varchar("nome", { length: 200 }).notNull(),
   descricao: text("descricao"),
   dados: jsonb("dados").notNull().default({}),
@@ -15,5 +15,5 @@ export const entidadesDaEdificacao = pgTable("entidades_da_edificacao", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export type EntidadeDaEdificacao = typeof entidadesDaEdificacao.$inferSelect
-export type NewEntidadeDaEdificacao = typeof entidadesDaEdificacao.$inferInsert
+export type Sensor = typeof sensores.$inferSelect
+export type NewSensor = typeof sensores.$inferInsert

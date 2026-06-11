@@ -6,16 +6,16 @@ import {
 
 interface Leitura {
   id: number
-  entidadeId: number
+  sensorId: number
   valor: string | null
   unidade: string | null
   lidaEm: Date | null
   topicoMqtt: string | null
 }
 
-export function ReadingsChart({ data, entidadeNomes }: { data: Leitura[]; entidadeNomes: Record<number, string> }) {
+export function ReadingsChart({ data, sensorNomes }: { data: Leitura[]; sensorNomes: Record<number, string> }) {
   const cores = ["#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#8b5cf6", "#ec4899"]
-  const entidades = Array.from(new Set(data.map((d) => d.entidadeId)))
+  const sensores = Array.from(new Set(data.map((d) => d.sensorId)))
 
   const chartData = data
     .sort((a, b) => new Date(a.lidaEm ?? 0).getTime() - new Date(b.lidaEm ?? 0).getTime())
@@ -23,7 +23,7 @@ export function ReadingsChart({ data, entidadeNomes }: { data: Leitura[]; entida
       time: d.lidaEm
         ? new Date(d.lidaEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
         : "",
-      ...Object.fromEntries(entidades.map((eid) => [`v${eid}`, d.entidadeId === eid ? Number(d.valor) : null])),
+      ...Object.fromEntries(sensores.map((sid) => [`v${sid}`, d.sensorId === sid ? Number(d.valor) : null])),
     }))
 
   return (
@@ -48,18 +48,18 @@ export function ReadingsChart({ data, entidadeNomes }: { data: Leitura[]; entida
               }}
             />
             <Legend
-              formatter={(value: string) => entidadeNomes[Number(value.replace("v", ""))] ?? value}
+              formatter={(value: string) => sensorNomes[Number(value.replace("v", ""))] ?? value}
             />
-            {entidades.map((eid, i) => (
+            {sensores.map((sid, i) => (
               <Line
-                key={eid}
+                key={sid}
                 type="monotone"
-                dataKey={`v${eid}`}
+                dataKey={`v${sid}`}
                 stroke={cores[i % cores.length]}
                 strokeWidth={2}
                 dot={false}
                 connectNulls={false}
-                name={String(eid)}
+                name={String(sid)}
               />
             ))}
           </LineChart>

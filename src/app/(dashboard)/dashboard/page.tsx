@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/tenant"
 import { db } from "@/lib/db"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
-import { entidadesDaEdificacao } from "@/lib/db/schema/entidades-da-edificacao"
+import { sensores } from "@/lib/db/schema/sensores"
 import { leituras } from "@/lib/db/schema/leituras"
 import { eq, and, inArray, sql } from "drizzle-orm"
 import { Building2, Users, Activity, AlertTriangle } from "lucide-react"
@@ -18,9 +18,9 @@ export default async function DashboardPage() {
     if (!isSuper) c.push(eq(edificacoes.tenantId, tenantId!))
     return c
   }
-  const entConds = () => {
+  const sensorConds = () => {
     const c: any[] = []
-    if (!isSuper) c.push(eq(entidadesDaEdificacao.tenantId, tenantId!))
+    if (!isSuper) c.push(eq(sensores.tenantId, tenantId!))
     return c
   }
   const leitConds = () => {
@@ -33,9 +33,9 @@ export default async function DashboardPage() {
     .from(edificacoes)
     .where(and(...buildConds()))
 
-  const [totalEntidades] = await db.select({ count: sql<number>`count(*)` })
-    .from(entidadesDaEdificacao)
-    .where(and(...entConds()))
+  const [totalSensores] = await db.select({ count: sql<number>`count(*)` })
+    .from(sensores)
+    .where(and(...sensorConds()))
 
   const [totalLeituras] = await db.select({ count: sql<number>`count(*)` })
     .from(leituras)
@@ -47,18 +47,18 @@ export default async function DashboardPage() {
     .orderBy(sql`lida_em DESC`)
     .limit(50)
 
-  const entidadeIds = Array.from(new Set(ultimasLeituras.map((l) => l.entidadeId)))
-  const entidades = entidadeIds.length > 0
-    ? await db.select({ id: entidadesDaEdificacao.id, nome: entidadesDaEdificacao.nome })
-        .from(entidadesDaEdificacao)
-        .where(and(inArray(entidadesDaEdificacao.id, entidadeIds), ...entConds()))
+  const sensorIds = Array.from(new Set(ultimasLeituras.map((l) => l.sensorId)))
+  const listaSensores = sensorIds.length > 0
+    ? await db.select({ id: sensores.id, nome: sensores.nome })
+        .from(sensores)
+        .where(and(inArray(sensores.id, sensorIds), ...sensorConds()))
     : []
-  const entidadeNomes: Record<number, string> = {}
-  for (const e of entidades) entidadeNomes[e.id] = e.nome
+  const sensorNomes: Record<number, string> = {}
+  for (const s of listaSensores) sensorNomes[s.id] = s.nome
 
   const cards = [
     { label: "Edificações", value: Number(totalEdificacoes.count), icon: Building2, color: "text-emerald-500" },
-    { label: "Entidades", value: Number(totalEntidades.count), icon: Users, color: "text-blue-500" },
+    { label: "Sensores", value: Number(totalSensores.count), icon: Users, color: "text-blue-500" },
     { label: "Leituras", value: Number(totalLeituras.count), icon: Activity, color: "text-violet-500" },
     { label: "Alertas", value: 0, icon: AlertTriangle, color: "text-amber-500" },
   ]
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      <ReadingsChart data={ultimasLeituras} entidadeNomes={entidadeNomes} />
+      <ReadingsChart data={ultimasLeituras} sensorNomes={sensorNomes} />
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-sm">
         <div className="p-4 border-b border-[var(--border)]">
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
               <div key={leitura.id} className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">
                   <span className="text-xs font-medium text-[var(--text-secondary)]">
-                    {entidadeNomes[leitura.entidadeId] ?? `Entidade #${leitura.entidadeId}`}
+                    {sensorNomes[leitura.sensorId] ?? `Sensor #${leitura.sensorId}`}
                   </span>
                   <p className="text-lg font-bold">
                     {String(leitura.valor)} {leitura.unidade}

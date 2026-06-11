@@ -34,7 +34,7 @@
 Cada cliente = um **tenant**. Isolamento por `tenant_id` em todas as tabelas. Sessão contém `tenantId` e toda query filtra por ele.
 
 ### Modelo Extensível
-`entidades_da_edificacao` com `tipo_entidade` (VARCHAR) + `dados` (JSONB) permite qualquer tipo de entidade sem criar tabelas novas:
+`sensores` com `tipo_sensor` (VARCHAR) + `dados` (JSONB) permite qualquer tipo de sensor sem criar tabelas novas:
 - Engenheiro → `{ "crea": "12345", "especialidade": "estrutural" }`
 - Monitor → `{ "modelo": "ESP32", "firmware": "v2.1", "topico_mqtt": "..." }`
 - Equipamento → `{ "fabricante": "Hilti", "num_serie": "..." }`
@@ -44,11 +44,11 @@ Cada cliente = um **tenant**. Isolamento por `tenant_id` em todas as tabelas. Se
 - `tenants` — clientes do SaaS
 - `usuarios` — usuários com `tenant_id`
 - `edificacoes` — edificações por tenant
-- `entidades_da_edificacao` — modelo extensível (JSONB)
+- `sensores` — sensores extensíveis (JSONB)
 - `leituras` — dados temporais dos sensores
 
 ### Convenção MQTT
-Tópicos: `pdm/{tenant_slug}/{edificacao_id}/{entidade_id}/leitura`
+Tópicos: `pdm/{tenant_slug}/{edificacao_id}/{sensor_id}/leitura`
 
 ## Padrões de Código
 

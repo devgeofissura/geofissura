@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
 
   const topicParts = body.topic.split("/")
-  const [, tenantSlug, edificacaoId, entidadeId] = topicParts
+  const [, tenantSlug, edificacaoId, sensorId] = topicParts
 
   const tenant = await db.query.tenants.findFirst({
     where: (t, { eq }) => eq(t.slug, tenantSlug),
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const dados = JSON.parse(body.payload)
   await db.insert(leituras).values({
     tenantId: tenant.id,
-    entidadeId: Number(entidadeId),
+    sensorId: Number(sensorId),
     topicoMqtt: body.topic,
     valor: dados.valor,
     unidade: dados.unidade,

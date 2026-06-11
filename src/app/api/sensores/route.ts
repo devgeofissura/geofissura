@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { entidadesDaEdificacao } from "@/lib/db/schema/entidades-da-edificacao"
+import { sensores } from "@/lib/db/schema/sensores"
 import { getSession } from "@/lib/tenant"
 import { eq, and } from "drizzle-orm"
 import { apiError } from "@/lib/api-error"
@@ -13,8 +13,8 @@ export async function GET() {
     }
 
     const conditions = []
-    if (!isSuper) conditions.push(eq(entidadesDaEdificacao.tenantId, tenantId!))
-    const dados = await db.select().from(entidadesDaEdificacao).where(and(...conditions))
+    if (!isSuper) conditions.push(eq(sensores.tenantId, tenantId!))
+    const dados = await db.select().from(sensores).where(and(...conditions))
 
     return NextResponse.json(dados)
   } catch (err) {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const [novo] = await db.insert(entidadesDaEdificacao)
+    const [novo] = await db.insert(sensores)
       .values({ ...body, tenantId: session.user.tenantId })
       .returning()
 

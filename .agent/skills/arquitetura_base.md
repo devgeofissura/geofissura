@@ -66,17 +66,17 @@ CREATE INDEX idx_edificacoes_tenant ON edificacoes(tenant_id);
 --------------------------------------------------------------
 -- ENTIDADES DA EDIFICAÇÃO (modelo extensível)
 --------------------------------------------------------------
--- Cada edificação pode ter N tipos de entidade:
+-- Cada edificação pode ter N tipos de sensor:
 -- Engenheiro, Arquiteto, Equipamento, Monitor, Laudo, Sensor etc.
--- O campo `tipo_entidade` define qual é a entidade.
+-- O campo `tipo_sensor` define qual é o sensor.
 -- O campo `dados` (JSONB) armazena os atributos específicos
 -- de cada tipo sem precisar criar uma tabela nova.
 --------------------------------------------------------------
-CREATE TABLE entidades_da_edificacao (
+CREATE TABLE sensores (
   id              SERIAL PRIMARY KEY,
   tenant_id       INTEGER NOT NULL REFERENCES tenants(id),
   edificacao_id   INTEGER NOT NULL REFERENCES edificacoes(id) ON DELETE CASCADE,
-  tipo_entidade   VARCHAR(50) NOT NULL,  -- 'engenheiro', 'arquiteto', 'equipamento', 'monitor', 'laudo', 'sensor', ...
+  tipo_sensor   VARCHAR(50) NOT NULL,  -- 'fissura', 'inclinacao', 'temperatura', 'umidade', 'sismo', ...
   nome            VARCHAR(200) NOT NULL,
   descricao       TEXT,
   dados           JSONB NOT NULL DEFAULT '{}',
@@ -90,9 +90,9 @@ CREATE TABLE entidades_da_edificacao (
   updated_at      TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_entidades_tenant    ON entidades_da_edificacao(tenant_id);
-CREATE INDEX idx_entidades_edificacao ON entidades_da_edificacao(edificacao_id);
-CREATE INDEX idx_entidades_tipo      ON entidades_da_edificacao(tipo_entidade);
+CREATE INDEX idx_sensores_tenant    ON sensores(tenant_id);
+CREATE INDEX idx_sensores_edificacao ON sensores(edificacao_id);
+CREATE INDEX idx_sensores_tipo      ON sensores(tipo_sensor);
 
 --------------------------------------------------------------
 -- LEITURAS DOS SENSORES (dados temporais)
@@ -108,7 +108,7 @@ CREATE TABLE leituras (
   lida_em         TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_leituras_entidade ON leituras(entidade_id);
+CREATE INDEX idx_leituras_sensor ON leituras(sensor_id);
 CREATE INDEX idx_leituras_tempo    ON leituras(lida_em DESC);
 ```
 
@@ -161,16 +161,16 @@ export const edificacoes = pgTable("edificacoes", {
 ```
 
 ```ts
-// lib/db/schema/entidades-da-edificacao.ts
+// lib/db/schema/sensores.ts
 import { pgTable, serial, varchar, integer, timestamp, text, jsonb } from "drizzle-orm/pg-core"
 import { tenants } from "./tenants"
 import { edificacoes } from "./edificacoes"
 
-export const entidadesDaEdificacao = pgTable("entidades_da_edificacao", {
+export const sensores = pgTable("sensores", {
   id: serial("id").primaryKey(),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
   edificacaoId: integer("edificacao_id").notNull().references(() => edificacoes.id, { onDelete: "cascade" }),
-  tipoEntidade: varchar("tipo_entidade", { length: 50 }).notNull(),
+  tipoSensor: varchar("tipo_sensor", { length: 50 }).notNull(),
   nome: varchar("nome", { length: 200 }).notNull(),
   descricao: text("descricao"),
   dados: jsonb("dados").notNull().default({}),
@@ -179,20 +179,20 @@ export const entidadesDaEdificacao = pgTable("entidades_da_edificacao", {
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export type EntidadeDaEdificacao = typeof entidadesDaEdificacao.$inferSelect
-export type NewEntidadeDaEdificacao = typeof entidadesDaEdificacao.$inferInsert
+export type Sensor = typeof sensores.$inferSelect
+export type NewSensor = typeof sensores.$inferInsert
 ```
 
 ```ts
 // lib/db/schema/leituras.ts
 import { pgTable, serial, varchar, integer, timestamp, numeric, jsonb } from "drizzle-orm/pg-core"
 import { tenants } from "./tenants"
-import { entidadesDaEdificacao } from "./entidades-da-edificacao"
+import { sensores } from "./sensores"
 
 export const leituras = pgTable("leituras", {
   id: serial("id").primaryKey(),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
-  entidadeId: integer("entidade_id").notNull().references(() => entidadesDaEdificacao.id, { onDelete: "cascade" }),
+  sensorId: integer("sensor_id").notNull().references(() => sensores.id, { onDelete: "cascade" }),
   topicoMqtt: varchar("topico_mqtt", { length: 500 }),
   valor: numeric("valor", { precision: 12, scale: 4 }),
   unidade: varchar("unidade", { length: 20 }),
@@ -397,7 +397,7 @@ CREATE TABLE IF NOT EXISTS entidades_da_edificacao (
 CREATE TABLE IF NOT EXISTS leituras (
   id              SERIAL PRIMARY KEY,
   tenant_id       INTEGER NOT NULL REFERENCES tenants(id),
-  entidade_id     INTEGER NOT NULL REFERENCES entidades_da_edificacao(id) ON DELETE CASCADE,
+  sensor_id       INTEGER NOT NULL REFERENCES sensores(id) ON DELETE CASCADE,
   topico_mqtt     VARCHAR(500),
   valor           NUMERIC(12, 4),
   unidade         VARCHAR(20),
@@ -406,10 +406,10 @@ CREATE TABLE IF NOT EXISTS leituras (
 );
 
 CREATE INDEX IF NOT EXISTS idx_edificacoes_tenant     ON edificacoes(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_entidades_tenant       ON entidades_da_edificacao(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_entidades_edificacao   ON entidades_da_edificacao(edificacao_id);
-CREATE INDEX IF NOT EXISTS idx_entidades_tipo         ON entidades_da_edificacao(tipo_entidade);
-CREATE INDEX IF NOT EXISTS idx_leituras_entidade      ON leituras(entidade_id);
+CREATE INDEX IF NOT EXISTS idx_sensores_tenant        ON sensores(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_sensores_edificacao    ON sensores(edificacao_id);
+CREATE INDEX IF NOT EXISTS idx_sensores_tipo          ON sensores(tipo_sensor);
+CREATE INDEX IF NOT EXISTS idx_leituras_sensor        ON leituras(sensor_id);
 CREATE INDEX IF NOT EXISTS idx_leituras_tempo         ON leituras(lida_em DESC);
 ```
 
@@ -778,7 +778,7 @@ export const tenants = pgTable("tenants", {
 **Relacionamentos:**
 - `usuarios.tenant_id → tenants.id`
 - `edificacoes.tenant_id → tenants.id`
-- `entidades_da_edificacao.tenant_id → tenants.id`
+- `sensores.tenant_id → tenants.id`
 - `leituras.tenant_id → tenants.id`
 
 ---

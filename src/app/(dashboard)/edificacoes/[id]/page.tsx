@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/tenant"
 import { db } from "@/lib/db"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
-import { entidadesDaEdificacao } from "@/lib/db/schema/entidades-da-edificacao"
+import { sensores } from "@/lib/db/schema/sensores"
 import { eq, and } from "drizzle-orm"
 import { notFound } from "next/navigation"
 
@@ -23,10 +23,10 @@ export default async function EdificacaoDetalhePage({ params }: Props) {
 
   if (!edificacao) notFound()
 
-  const conditions2 = [eq(entidadesDaEdificacao.edificacaoId, edificacao.id)]
-  if (!isSuper) conditions2.push(eq(entidadesDaEdificacao.tenantId, tenantId!))
-  const entidades = await db.select()
-    .from(entidadesDaEdificacao)
+  const conditions2 = [eq(sensores.edificacaoId, edificacao.id)]
+  if (!isSuper) conditions2.push(eq(sensores.tenantId, tenantId!))
+  const listaSensores = await db.select()
+    .from(sensores)
     .where(and(...conditions2))
 
   return (
@@ -38,26 +38,26 @@ export default async function EdificacaoDetalhePage({ params }: Props) {
         )}
       </div>
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Entidades Vinculadas</h2>
-        {entidades.length === 0 ? (
+        <h2 className="text-lg font-semibold">Sensores Instalados</h2>
+        {listaSensores.length === 0 ? (
           <p className="text-sm text-[var(--text-secondary)]">
-            Nenhuma entidade vinculada a esta edificação
+            Nenhum sensor instalado nesta edificação
           </p>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {entidades.map((ent) => (
+            {listaSensores.map((sensor) => (
               <div
-                key={ent.id}
+                key={sensor.id}
                 className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm"
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span className="rounded bg-[var(--brand)]/10 px-2 py-0.5 text-xs font-medium text-[var(--brand)]">
-                    {ent.tipoEntidade}
+                    {sensor.tipoSensor}
                   </span>
                 </div>
-                <p className="font-medium">{ent.nome}</p>
-                {ent.descricao && (
-                  <p className="text-sm text-[var(--text-secondary)]">{ent.descricao}</p>
+                <p className="font-medium">{sensor.nome}</p>
+                {sensor.descricao && (
+                  <p className="text-sm text-[var(--text-secondary)]">{sensor.descricao}</p>
                 )}
               </div>
             ))}

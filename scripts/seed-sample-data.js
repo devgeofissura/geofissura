@@ -1,6 +1,6 @@
 const postgres = require("postgres")
 
-async function seedEntidades() {
+async function seedSensores() {
   const sql = postgres(process.env.DATABASE_URL, { prepare: false })
   try {
     const [tenant] = await sql`SELECT id FROM tenants LIMIT 1`
@@ -17,18 +17,18 @@ async function seedEntidades() {
       { tipo: "Sismo", nome: "Sismógrafo #01" },
     ]
 
-    const entidades = []
+    const sensoresCriados = []
     for (const s of sensores) {
       const [ent] = await sql`
-        INSERT INTO entidades_da_edificacao (tenant_id, edificacao_id, tipo_entidade, nome, dados)
+        INSERT INTO sensores (tenant_id, edificacao_id, tipo_sensor, nome, dados)
         VALUES (${tenant.id}, ${ed.id}, ${s.tipo}, ${s.nome}, '{}')
-        RETURNING id, tipo_entidade
+        RETURNING id, tipo_sensor
       `
-      if (ent) entidades.push(ent)
+      if (ent) sensoresCriados.push(ent)
     }
-    console.log(`Criadas ${entidades.length} entidades`)
+    console.log(`Criados ${sensoresCriados.length} sensores`)
 
-    // Generate sample readings for each entity
+    // Generate sample readings for each sensor
     const unidades = {
       Fissura: "mm", Inclinacao: "graus", Temperatura: "C",
       Umidade: "%", Pressao: "bar", Sismo: "mm/s",
@@ -43,17 +43,17 @@ async function seedEntidades() {
     }
 
     let totalLeituras = 0
-    for (const ent of entidades) {
-      const unidade = unidades[ent.tipo] ?? ""
-      const base = valoresBase[ent.tipo] ?? 0
-      const varianca = variacao[ent.tipo] ?? 0.5
+    for (const ent of sensoresCriados) {
+      const unidade = unidades[ent.tipo_sensor] ?? ""
+      const base = valoresBase[ent.tipo_sensor] ?? 0
+      const varianca = variacao[ent.tipo_sensor] ?? 0.5
       const numLeituras = 20 + Math.floor(Math.random() * 30)
 
       for (let i = 0; i < numLeituras; i++) {
         const timestamp = new Date(Date.now() - (numLeituras - i) * 3600000)
         const valor = (base + (Math.random() - 0.5) * varianca * 2).toFixed(2)
         await sql`
-          INSERT INTO leituras (tenant_id, entidade_id, valor, unidade, lida_em)
+          INSERT INTO leituras (tenant_id, sensor_id, valor, unidade, lida_em)
           VALUES (${tenant.id}, ${ent.id}, ${valor}, ${unidade}, ${timestamp.toISOString()})
         `
         totalLeituras++
@@ -65,4 +65,4 @@ async function seedEntidades() {
   finally { await sql.end() }
 }
 
-seedEntidades()
+seedSensores()

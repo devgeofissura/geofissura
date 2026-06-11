@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-export default function NovaEntidadePage() {
+export default function NovoSensorPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -19,13 +19,13 @@ export default function NovaEntidadePage() {
     const form = new FormData(e.currentTarget)
     const data = {
       edificacaoId: Number(form.get("edificacaoId")),
-      tipoEntidade: form.get("tipoEntidade") as string,
+      tipoSensor: form.get("tipoSensor") as string,
       nome: form.get("nome") as string,
       descricao: form.get("descricao") as string,
     }
 
     try {
-      const res = await fetch("/api/entidades", {
+      const res = await fetch("/api/sensores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -33,10 +33,10 @@ export default function NovaEntidadePage() {
 
       if (!res.ok) throw new Error(await res.text())
 
-      toast.success("Entidade cadastrada com sucesso")
-      router.push("/entidades")
+      toast.success("Sensor cadastrado com sucesso")
+      router.push("/sensores")
     } catch {
-      toast.error("Erro ao cadastrar entidade")
+      toast.error("Erro ao cadastrar sensor")
     } finally {
       setLoading(false)
     }
@@ -45,9 +45,9 @@ export default function NovaEntidadePage() {
   return (
     <div className="space-y-6 max-w-lg">
       <div>
-        <h1 className="text-2xl font-bold">Nova Entidade</h1>
+        <h1 className="text-2xl font-bold">Novo Sensor</h1>
         <p className="text-sm text-[var(--text-secondary)]">
-          Cadastre engenheiros, equipamentos, monitores, sensores, laudos...
+          Cadastre fissurômetros, inclinômetros, sensores de temperatura, umidade...
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -56,17 +56,17 @@ export default function NovaEntidadePage() {
           <Input id="edificacaoId" name="edificacaoId" type="number" placeholder="1" required />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="tipoEntidade">Tipo</Label>
+          <Label htmlFor="tipoSensor">Tipo</Label>
           <Input
-            id="tipoEntidade"
-            name="tipoEntidade"
-            placeholder="engenheiro, equipamento, monitor, laudo, sensor..."
+            id="tipoSensor"
+            name="tipoSensor"
+            placeholder="Fissura, Inclinacao, Temperatura, Umidade..."
             required
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="nome">Nome</Label>
-          <Input id="nome" name="nome" placeholder="Nome da entidade" required />
+          <Input id="nome" name="nome" placeholder="Nome do sensor" required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="descricao">Descrição</Label>

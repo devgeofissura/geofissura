@@ -27,8 +27,8 @@ const NAV_ITENS = [
     roles: ["SUPER", "ADMIN", "USER", "VIEWER"],
   },
   {
-    titulo: "Entidades",
-    href: "/entidades",
+    titulo: "Sensores",
+    href: "/sensores",
     icon: Users,
     roles: ["SUPER", "ADMIN", "USER", "VIEWER"],
   },

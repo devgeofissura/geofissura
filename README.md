@@ -25,12 +25,12 @@ Plataforma SaaS para monitoramento de fissuras, trincas e movimentações estrut
 - [x] **Autenticação** — login com email/senha, sessão JWT com tenantId + role
 - [x] **Multi-tenancy** — isolamento total de dados por tenant
 - [x] **CRUD Edificações** — listar, criar, detalhe (editar/deletar em breve)
-- [x] **CRUD Entidades** — listar, criar, detalhe (modelo extensível via JSONB)
+- [x] **CRUD Sensores** — listar, criar, detalhe (modelo extensível via JSONB)
 - [x] **Leituras** — listagem com dados dos sensores IoT
 - [x] **Relatórios** — geração de PDF
 - [x] **Webhook MQTT** — recebe dados dos dispositivos via EMQX
 - [ ] **Dashboard com gráficos** — Recharts
-- [ ] **CRUD completo** — editar/deletar edificações e entidades
+- [ ] **CRUD completo** — editar/deletar edificações e sensores
 - [ ] **Administração** — gerenciamento de usuários do tenant
 - [ ] **Upload de laudos** — Vercel Blob
 - [ ] **Notificações** — email/SMS para alertas
@@ -79,14 +79,14 @@ src/
 │   ├── (dashboard)/         # Painel protegido
 │   │   ├── dashboard/       # Home do painel
 │   │   ├── edificacoes/     # CRUD edificações
-│   │   ├── entidades/       # CRUD entidades
+│   │   ├── sensores/        # CRUD sensores
 │   │   ├── leituras/        # Listagem de leituras
 │   │   ├── relatorios/      # Geração de relatórios
 │   │   └── admin/           # Administração
 │   ├── api/
 │   │   ├── auth/            # NextAuth
 │   │   ├── edificacoes/     # API CRUD
-│   │   ├── entidades/       # API CRUD
+│   │   ├── sensores/        # API CRUD
 │   │   ├── leituras/        # API leituras
 │   │   └── mqtt/webhook/    # Webhook EMQX
 │   └── page.tsx             # Landing page
