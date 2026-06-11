@@ -4,6 +4,10 @@ import { edificacoes } from "@/lib/db/schema/edificacoes"
 import { sensores } from "@/lib/db/schema/sensores"
 import { eq, and } from "drizzle-orm"
 import { notFound } from "next/navigation"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Pencil } from "lucide-react"
+import { DeleteButton } from "@/components/ui/delete-button"
 
 interface Props {
   params: { id: string }
@@ -31,11 +35,22 @@ export default async function EdificacaoDetalhePage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{edificacao.nome}</h1>
-        {edificacao.endereco && (
-          <p className="text-sm text-[var(--text-secondary)]">{edificacao.endereco}</p>
-        )}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">{edificacao.nome}</h1>
+          {edificacao.endereco && (
+            <p className="text-sm text-[var(--text-secondary)]">{edificacao.endereco}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href={`/edificacoes/${params.id}/editar`}>
+            <Button variant="outline" size="sm">
+              <Pencil className="mr-1 h-3 w-3" />
+              Editar
+            </Button>
+          </Link>
+          <DeleteButton apiPath={`/api/edificacoes/${params.id}`} redirectTo="/edificacoes" />
+        </div>
       </div>
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Sensores Instalados</h2>

@@ -4,6 +4,10 @@ import { sensores } from "@/lib/db/schema/sensores"
 import { leituras } from "@/lib/db/schema/leituras"
 import { eq, and } from "drizzle-orm"
 import { notFound } from "next/navigation"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Pencil } from "lucide-react"
+import { DeleteButton } from "@/components/ui/delete-button"
 
 interface Props {
   params: { id: string }
@@ -32,15 +36,26 @@ export default async function SensorDetalhePage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <span className="rounded bg-[var(--brand)]/10 px-2 py-0.5 text-xs font-medium text-[var(--brand)]">
-          {sensor.tipoSensor}
-        </span>
-        <div>
-          <h1 className="text-2xl font-bold">{sensor.nome}</h1>
-          {sensor.descricao && (
-            <p className="text-sm text-[var(--text-secondary)]">{sensor.descricao}</p>
-          )}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <span className="rounded bg-[var(--brand)]/10 px-2 py-0.5 text-xs font-medium text-[var(--brand)]">
+            {sensor.tipoSensor}
+          </span>
+          <div>
+            <h1 className="text-2xl font-bold">{sensor.nome}</h1>
+            {sensor.descricao && (
+              <p className="text-sm text-[var(--text-secondary)]">{sensor.descricao}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href={`/sensores/${params.id}/editar`}>
+            <Button variant="outline" size="sm">
+              <Pencil className="mr-1 h-3 w-3" />
+              Editar
+            </Button>
+          </Link>
+          <DeleteButton apiPath={`/api/sensores/${params.id}`} redirectTo="/sensores" />
         </div>
       </div>
 

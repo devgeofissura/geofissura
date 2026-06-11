@@ -30,7 +30,7 @@ Plataforma SaaS para monitoramento de fissuras, trincas e movimentações estrut
 - [x] **Relatórios** — geração de PDF
 - [x] **Webhook MQTT** — recebe dados dos dispositivos via EMQX
 - [ ] **Dashboard com gráficos** — Recharts
-- [ ] **CRUD completo** — editar/deletar edificações e sensores
+- [x] **CRUD completo** — editar/deletar edificações e sensores
 - [ ] **Administração** — gerenciamento de usuários do tenant
 - [ ] **Upload de laudos** — Vercel Blob
 - [ ] **Notificações** — email/SMS para alertas
