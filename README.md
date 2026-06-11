@@ -32,7 +32,7 @@ Plataforma SaaS para monitoramento de fissuras, trincas e movimentações estrut
 - [ ] **Dashboard com gráficos** — Recharts
 - [x] **CRUD completo** — editar/deletar edificações e sensores
 - [ ] **Administração** — gerenciamento de usuários do tenant
-- [ ] **Upload de laudos** — Vercel Blob
+- [x] **Upload de laudos** — links com descrição + usuário (Google Drive, etc)
 - [ ] **Notificações** — email/SMS para alertas
 
 ## Modelo de Negócio

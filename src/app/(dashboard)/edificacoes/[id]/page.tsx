@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Pencil } from "lucide-react"
 import { DeleteButton } from "@/components/ui/delete-button"
+import { DocumentosSection } from "@/components/documentos-section"
 
 interface Props {
   params: { id: string }
@@ -79,6 +80,8 @@ export default async function EdificacaoDetalhePage({ params }: Props) {
           </div>
         )}
       </div>
+
+      <DocumentosSection edificacaoId={edificacao.id} />
     </div>
   )
 }

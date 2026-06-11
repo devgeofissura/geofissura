@@ -5,6 +5,7 @@ import * as usuarios from "./schema/usuarios"
 import * as edificacoes from "./schema/edificacoes"
 import * as sensores from "./schema/sensores"
 import * as leituras from "./schema/leituras"
+import * as documentos from "./schema/documentos"
 
 const connectionString = process.env.DATABASE_URL!
 
@@ -14,5 +15,5 @@ if (!connectionString) {
 
 const client = postgres(connectionString, { prepare: false })
 export const db = drizzle(client, {
-  schema: { ...tenants, ...usuarios, ...edificacoes, ...sensores, ...leituras },
+  schema: { ...tenants, ...usuarios, ...edificacoes, ...sensores, ...leituras, ...documentos },
 })

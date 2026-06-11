@@ -30,11 +30,11 @@ CREATE TABLE IF NOT EXISTS edificacoes (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS entidades_da_edificacao (
+CREATE TABLE IF NOT EXISTS sensores (
   id              SERIAL PRIMARY KEY,
   tenant_id       INTEGER NOT NULL REFERENCES tenants(id),
   edificacao_id   INTEGER NOT NULL REFERENCES edificacoes(id) ON DELETE CASCADE,
-  tipo_entidade   VARCHAR(50) NOT NULL,
+  tipo_sensor     VARCHAR(50) NOT NULL,
   nome            VARCHAR(200) NOT NULL,
   descricao       TEXT,
   dados           JSONB NOT NULL DEFAULT '{}',
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS entidades_da_edificacao (
 CREATE TABLE IF NOT EXISTS leituras (
   id              SERIAL PRIMARY KEY,
   tenant_id       INTEGER NOT NULL REFERENCES tenants(id),
-  entidade_id     INTEGER NOT NULL REFERENCES entidades_da_edificacao(id) ON DELETE CASCADE,
+  sensor_id       INTEGER NOT NULL REFERENCES sensores(id) ON DELETE CASCADE,
   topico_mqtt     VARCHAR(500),
   valor           NUMERIC(12, 4),
   unidade         VARCHAR(20),
@@ -55,8 +55,8 @@ CREATE TABLE IF NOT EXISTS leituras (
 );
 
 CREATE INDEX IF NOT EXISTS idx_edificacoes_tenant     ON edificacoes(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_entidades_tenant       ON entidades_da_edificacao(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_entidades_edificacao   ON entidades_da_edificacao(edificacao_id);
-CREATE INDEX IF NOT EXISTS idx_entidades_tipo         ON entidades_da_edificacao(tipo_entidade);
-CREATE INDEX IF NOT EXISTS idx_leituras_entidade      ON leituras(entidade_id);
+CREATE INDEX IF NOT EXISTS idx_sensores_tenant        ON sensores(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_sensores_edificacao    ON sensores(edificacao_id);
+CREATE INDEX IF NOT EXISTS idx_sensores_tipo          ON sensores(tipo_sensor);
+CREATE INDEX IF NOT EXISTS idx_leituras_sensor        ON leituras(sensor_id);
 CREATE INDEX IF NOT EXISTS idx_leituras_tempo         ON leituras(lida_em DESC);
