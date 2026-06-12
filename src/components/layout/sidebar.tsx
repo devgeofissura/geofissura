@@ -9,6 +9,7 @@ import {
   Users,
   Activity,
   FileText,
+  Bell,
   Settings,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
@@ -42,6 +43,12 @@ const NAV_ITENS = [
     titulo: "Relatórios",
     href: "/relatorios",
     icon: FileText,
+    roles: ["SUPER", "ADMIN", "USER"],
+  },
+  {
+    titulo: "Notificações",
+    href: "/notificacoes",
+    icon: Bell,
     roles: ["SUPER", "ADMIN", "USER"],
   },
   {

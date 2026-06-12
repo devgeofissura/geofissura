@@ -1,8 +1,30 @@
-const { readdirSync, readFileSync } = require("fs")
-const { join } = require("path")
+const { readdirSync, readFileSync, existsSync } = require("fs")
+const { join, resolve } = require("path")
 const postgres = require("postgres")
 
+// Carrega variaveis do .env manualmente
+const envPath = resolve(__dirname, "..", ".env")
+if (existsSync(envPath)) {
+  const lines = readFileSync(envPath, "utf-8").split("\n")
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith("#")) continue
+    const eqIdx = trimmed.indexOf("=")
+    if (eqIdx === -1) continue
+    const key = trimmed.slice(0, eqIdx)
+    let val = trimmed.slice(eqIdx + 1)
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1)
+    }
+    if (!process.env[key]) process.env[key] = val
+  }
+}
+
 async function migrate() {
+  if (!process.env.DATABASE_URL) {
+    console.error("DATABASE_URL não encontrada no .env")
+    process.exit(1)
+  }
   const sql = postgres(process.env.DATABASE_URL, { prepare: false })
 
   const migrationsDir = join(__dirname, "..", "src", "lib", "db", "migrations")
