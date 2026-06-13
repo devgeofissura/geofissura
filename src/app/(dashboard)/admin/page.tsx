@@ -41,7 +41,7 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
 
 interface UserListProps {
   clienteId: number
-  back: () => void
+  back?: () => void
   clienteNome: string
 }
 
@@ -121,14 +121,26 @@ function UserList({ clienteId, back, clienteNome }: UserListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={back}><ArrowLeft className="h-4 w-4" /></Button>
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold">{clienteNome}</h2>
-          <p className="text-sm text-[var(--text-secondary)]">Usuários do cliente</p>
+      {back && (
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={back}><ArrowLeft className="h-4 w-4" /></Button>
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold">{clienteNome}</h2>
+            <p className="text-sm text-[var(--text-secondary)]">Usuários do cliente</p>
+          </div>
+          <Button onClick={() => setShowForm(!showForm)} size="sm"><Plus className="mr-1 h-4 w-4" />Novo Usuário</Button>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} size="sm"><Plus className="mr-1 h-4 w-4" />Novo Usuário</Button>
-      </div>
+      )}
+
+      {!back && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Usuários</h2>
+            <p className="text-sm text-[var(--text-secondary)]">{clienteNome}</p>
+          </div>
+          <Button onClick={() => setShowForm(!showForm)} size="sm"><Plus className="mr-1 h-4 w-4" />Novo Usuário</Button>
+        </div>
+      )}
 
       {showForm && (
         <form onSubmit={handleCreate} className="max-w-lg rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-sm space-y-4">
@@ -138,10 +150,10 @@ function UserList({ clienteId, back, clienteNome }: UserListProps) {
           <div className="space-y-2"><Label>Senha</Label><Input name="password" type="password" required /></div>
           <div className="space-y-2">
             <Label>Papel</Label>
-            <select name="role" className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] px-3 py-2 text-sm" defaultValue="USER">
-              <option value="USER">Usuário</option>
-              <option value="ADMIN">Administrador</option>
+            <select name="role" className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-2 text-sm" defaultValue="USER">
               <option value="VIEWER">Visualizador</option>
+              <option value="USER">Usuário</option>
+              {!back && <option value="ADMIN">Administrador</option>}
             </select>
           </div>
           <div className="flex gap-2">
@@ -165,17 +177,17 @@ function UserList({ clienteId, back, clienteNome }: UserListProps) {
                     <div>
                       <Label className="text-xs">Nome</Label>
                       <input defaultValue={u.nome} onChange={(e) => setEditForm((f) => ({ ...f, nome: e.target.value }))}
-                        className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm" />
+                        className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm text-[var(--text-primary)]" />
                     </div>
                     <div>
                       <Label className="text-xs">Email</Label>
                       <input defaultValue={u.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                        className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm" />
+                        className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm text-[var(--text-primary)]" />
                     </div>
                     <div>
                       <Label className="text-xs">Papel</Label>
                       <select defaultValue={u.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
-                        className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm">
+                        className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] px-2 py-1 text-sm">
                         <option value="VIEWER">Viewer</option>
                         <option value="USER">User</option>
                         <option value="ADMIN">Admin</option>
@@ -193,7 +205,7 @@ function UserList({ clienteId, back, clienteNome }: UserListProps) {
                         {u.nome.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium truncate">{u.nome}</p>
+                        <p className="font-medium truncate text-[var(--text-primary)]">{u.nome}</p>
                         <p className="text-xs text-[var(--text-secondary)] truncate">{u.email}</p>
                       </div>
                     </div>
@@ -205,7 +217,7 @@ function UserList({ clienteId, back, clienteNome }: UserListProps) {
                             placeholder="Nova senha"
                             value={resetPasswordValue}
                             onChange={(e) => setResetPasswordValue(e.target.value)}
-                            className="w-32 rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm"
+                            className="w-32 rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm text-[var(--text-primary)]"
                             autoFocus
                           />
                           <Button size="sm" onClick={() => handleResetPassword(u.id)} disabled={resettingPassword}>
@@ -333,12 +345,12 @@ function ClientesTab() {
                       <div>
                         <Label className="text-xs">Nome</Label>
                         <input defaultValue={t.nome} onChange={(e) => setEditForm((f) => ({ ...f, nome: e.target.value }))}
-                          className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm" />
+                          className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm text-[var(--text-primary)]" />
                       </div>
                       <div>
                         <Label className="text-xs">Slug</Label>
                         <input defaultValue={t.slug} onChange={(e) => setEditForm((f) => ({ ...f, slug: e.target.value }))}
-                          className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm" />
+                          className="w-full rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm text-[var(--text-primary)]" />
                       </div>
                       <div className="col-span-2 flex gap-1 justify-end">
                         <Button size="sm" onClick={() => handleEditSave(t.id)}><Check className="h-3 w-3 mr-1" />Salvar</Button>
@@ -352,7 +364,7 @@ function ClientesTab() {
                           <Building2 className="h-4 w-4 text-[var(--brand)]" />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium truncate">{t.nome}</p>
+                          <p className="font-medium truncate text-[var(--text-primary)]">{t.nome}</p>
                           <p className="text-xs text-[var(--text-secondary)] truncate">{t.slug}</p>
                         </div>
                       </button>
@@ -384,13 +396,41 @@ export default function AdminPage() {
   const [tab, setTab] = useState<"usuarios" | "clientes">("clientes")
   const { data: session } = useSession()
   const isSuper = session?.user?.role === "SUPER"
+  const role = session?.user?.role ?? ""
+  const clienteId = (session?.user as any)?.clienteId
+  const [clienteNome, setClienteNome] = useState("")
+
+  useEffect(() => {
+    if (!isSuper && (role === "ADMIN" || role === "USER" || role === "VIEWER") && clienteId) {
+      fetch(`/api/clientes/${clienteId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((c) => { if (c) setClienteNome(c.nome) })
+        .catch(() => {})
+    }
+  }, [isSuper, role, clienteId])
+
+  if (!isSuper && role !== "ADMIN" && role !== "USER" && role !== "VIEWER") {
+    return null
+  }
+
+  if (!isSuper) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Administração</h1>
+          <p className="text-sm text-[var(--text-secondary)]">Gerenciar usuários</p>
+        </div>
+        <UserList clienteId={clienteId!} clienteNome={clienteNome || "Carregando..."} />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">Administração</h1><p className="text-sm text-[var(--text-secondary)]">Configurações do sistema</p></div>
       <div className="flex gap-2 border-b border-[var(--border)] pb-2">
         <TabButton active={tab === "clientes"} onClick={() => setTab("clientes")}>Clientes</TabButton>
-        {isSuper && <TabButton active={tab === "usuarios"} onClick={() => setTab("usuarios")}>Todos Usuários</TabButton>}
+        <TabButton active={tab === "usuarios"} onClick={() => setTab("usuarios")}>Todos Usuários</TabButton>
       </div>
       {tab === "clientes" && <ClientesTab />}
       {tab === "usuarios" && <UsuariosGlobalTab />}
@@ -454,7 +494,7 @@ function UsuariosGlobalTab() {
                   {u.nome.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-medium truncate">{u.nome}</p>
+                  <p className="font-medium truncate text-[var(--text-primary)]">{u.nome}</p>
                   <p className="text-xs text-[var(--text-secondary)] truncate">{u.email}</p>
                   {isSuper && (u as any).clienteNome && <p className="text-xs text-[var(--brand)] truncate">{(u as any).clienteNome}</p>}
                 </div>
@@ -467,7 +507,7 @@ function UsuariosGlobalTab() {
                       placeholder="Nova senha"
                       value={resetPasswordValue}
                       onChange={(e) => setResetPasswordValue(e.target.value)}
-                      className="w-32 rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm"
+                      className="w-32 rounded border border-[var(--border)] bg-[var(--bg-primary)] px-2 py-1 text-sm text-[var(--text-primary)]"
                       autoFocus
                     />
                     <Button size="sm" onClick={() => handleResetPassword(u.id)} disabled={resettingPassword}>

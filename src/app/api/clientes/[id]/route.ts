@@ -7,12 +7,16 @@ import { apiError } from "@/lib/api-error"
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { session, isSuper } = await getSession()
-    if (!session || !isSuper) {
+    const { session, isSuper, clienteId } = await getSession()
+    if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
     const id = parseInt(params.id)
+    if (!isSuper && clienteId !== id) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    }
+
     const cliente = await db
       .select()
       .from(clientes)
