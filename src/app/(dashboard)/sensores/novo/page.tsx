@@ -15,13 +15,8 @@ export default function NovoSensorPage() {
   const [tipos, setTipos] = useState<{ id: number; nome: string }[]>([])
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/edificacoes").then(r => r.json()),
-      fetch("/api/tipos-sensor").then(r => r.json()),
-    ]).then(([edData, tipoData]) => {
-      setEdificacoes(edData)
-      setTipos(tipoData)
-    }).catch(() => {})
+    fetch("/api/edificacoes").then(r => r.json()).then(setEdificacoes).catch(() => {})
+    fetch("/api/tipos-sensor").then(r => { if (r.ok) return r.json(); throw new Error() }).then(setTipos).catch(() => {})
   }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

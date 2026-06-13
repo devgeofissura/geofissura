@@ -29,17 +29,19 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
 
   function load() {
     setLoading(true)
-    Promise.all([
-      fetch("/api/sensores").then(r => r.json()),
-      fetch("/api/tipos-sensor").then(r => r.json()),
-    ]).then(([lista, tiposData]) => {
-      if (Array.isArray(lista)) {
-        setSensores(lista.filter(s => s.edificacaoId === edificacaoId))
-      }
-      setTipos(tiposData)
-    })
-      .catch(() => toast.error("Erro ao carregar dados"))
+    fetch("/api/sensores")
+      .then(r => r.json())
+      .then((lista: SensorItem[]) => {
+        if (Array.isArray(lista)) {
+          setSensores(lista.filter(s => s.edificacaoId === edificacaoId))
+        }
+      })
+      .catch(() => toast.error("Erro ao carregar sensores"))
       .finally(() => setLoading(false))
+    fetch("/api/tipos-sensor")
+      .then(r => { if (r.ok) return r.json(); throw new Error() })
+      .then(setTipos)
+      .catch(() => {})
   }
 
   useEffect(() => { load() }, [])

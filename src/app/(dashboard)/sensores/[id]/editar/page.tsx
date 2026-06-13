@@ -24,11 +24,9 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
   })
 
   useEffect(() => {
-    Promise.all([
-      fetch(`/api/sensores/${params.id}`).then((r) => r.json()),
-      fetch("/api/tipos-sensor").then((r) => r.json()),
-    ])
-      .then(([sensor, tiposData]) => {
+    fetch(`/api/sensores/${params.id}`)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+      .then((sensor) => {
         setForm({
           tipoSensor: sensor.tipoSensor ?? "",
           nome: sensor.nome ?? "",
@@ -38,13 +36,16 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
           fabricante: sensor.fabricante ?? "",
           valorMensal: sensor.valorMensal ?? "0",
         })
-        setTipos(tiposData)
         setLoadingData(false)
       })
       .catch(() => {
         toast.error("Erro ao carregar dados")
         router.push("/sensores")
       })
+    fetch("/api/tipos-sensor")
+      .then((r) => { if (r.ok) return r.json(); throw new Error() })
+      .then(setTipos)
+      .catch(() => {})
   }, [params.id, router])
 
   function set(field: string, value: string) {
