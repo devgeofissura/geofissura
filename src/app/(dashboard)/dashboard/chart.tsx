@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts"
 import { Modal } from "@/components/ui/modal"
 
@@ -42,20 +42,21 @@ export function ReadingsChart({
   const [selectedEdificacaoId, setSelectedEdificacaoId] = useState<number | null>(null)
   const [modalSensorId, setModalSensorId] = useState<number | null>(null)
 
-  const sensoresNoData = useMemo(() => {
+  const todosSensorIds = useMemo(() => {
     const ids = new Set(data.map((d) => d.sensorId))
     return Array.from(ids)
   }, [data])
 
-  const sensorIdsFiltrados = useMemo(() => {
-    if (!selectedEdificacaoId) return sensoresNoData
+  const sensorIdsVisiveis = useMemo(() => {
+    if (!selectedEdificacaoId) return todosSensorIds
     const idsNaEdificacao = new Set(
       sensores.filter((s) => s.edificacaoId === selectedEdificacaoId).map((s) => s.id)
     )
-    return sensoresNoData.filter((id) => idsNaEdificacao.has(id))
-  }, [selectedEdificacaoId, sensoresNoData, sensores])
+    return todosSensorIds.filter((id) => idsNaEdificacao.has(id))
+  }, [selectedEdificacaoId, todosSensorIds, sensores])
 
   const chartData = useMemo(() => {
+    if (sensorIdsVisiveis.length === 0) return []
     const sorted = [...data].sort(
       (a, b) => new Date(a.lidaEm ?? 0).getTime() - new Date(b.lidaEm ?? 0).getTime()
     )
@@ -69,10 +70,10 @@ export function ReadingsChart({
           })
         : "",
       ...Object.fromEntries(
-        sensoresNoData.map((sid) => [`v${sid}`, d.sensorId === sid ? Number(d.valor) : null])
+        sensorIdsVisiveis.map((sid) => [`v${sid}`, d.sensorId === sid ? Number(d.valor) : null])
       ),
     }))
-  }, [data, sensoresNoData])
+  }, [data, sensorIdsVisiveis])
 
   const modalChartData = useMemo(() => {
     if (!modalSensorId) return []
@@ -122,61 +123,69 @@ export function ReadingsChart({
           <p className="text-sm text-[var(--text-secondary)] text-center py-8">
             Nenhuma leitura registrada ainda
           </p>
-        ) : sensorIdsFiltrados.length === 0 ? (
+        ) : sensorIdsVisiveis.length === 0 ? (
           <p className="text-sm text-[var(--text-secondary)] text-center py-8">
             Nenhum sensor encontrado para esta edificação
           </p>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis
-                dataKey="time"
-                tick={{ fontSize: 10 }}
-                stroke="var(--text-secondary)"
-              />
-              <YAxis
-                tick={{ fontSize: 12 }}
-                stroke="var(--text-secondary)"
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--bg-primary)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
-                formatter={(value: number, name: string) => [
-                  value,
-                  sensorNomes[Number(name.replace("v", ""))] ?? name,
-                ]}
-              />
-              {sensorIdsFiltrados.map((sid, i) => (
-                <Line
-                  key={sid}
-                  type="monotone"
-                  dataKey={`v${sid}`}
-                  stroke={cores[i % cores.length]}
-                  strokeWidth={2}
-                  dot={(props: any) => {
-                    const { cx, cy } = props
-                    return (
-                      <circle
-                        cx={cx}
-                        cy={cy}
-                        r={cx != null ? 3 : 0}
-                        fill={cores[i % cores.length]}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setModalSensorId(sid)}
-                      />
-                    )
-                  }}
-                  connectNulls={true}
-                  name={String(sid)}
+          <div style={{ width: "100%", height: 300 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" />
+                <XAxis
+                  dataKey="time"
+                  tick={{ fontSize: 10, fill: "#6b7280" }}
+                  stroke="#d1d5db"
                 />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+                <YAxis
+                  tick={{ fontSize: 12, fill: "#6b7280" }}
+                  stroke="#d1d5db"
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "#fff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number, name: string) => [
+                    value,
+                    sensorNomes[Number(name.replace("v", ""))] ?? name,
+                  ]}
+                />
+                <Legend
+                  formatter={(value: string) =>
+                    sensorNomes[Number(value.replace("v", ""))] ?? value
+                  }
+                  wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
+                />
+                {sensorIdsVisiveis.map((sid, i) => (
+                  <Line
+                    key={sid}
+                    type="monotone"
+                    dataKey={`v${sid}`}
+                    stroke={cores[i % cores.length]}
+                    strokeWidth={2}
+                    dot={(props: any) => {
+                      const { cx, cy } = props
+                      return (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={cx != null ? 3 : 0}
+                          fill={cores[i % cores.length]}
+                          style={{ cursor: "pointer" }}
+                          onClick={() => setModalSensorId(sid)}
+                        />
+                      )
+                    }}
+                    connectNulls={true}
+                    name={String(sid)}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </div>
 
@@ -195,36 +204,38 @@ export function ReadingsChart({
                 Nenhuma leitura para este sensor
               </p>
             ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={modalChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis
-                    dataKey="time"
-                    tick={{ fontSize: 10 }}
-                    stroke="var(--text-secondary)"
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    stroke="var(--text-secondary)"
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--bg-primary)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="valor"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: "#10b981" }}
-                    connectNulls={true}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <div style={{ width: "100%", height: 250 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={modalChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" />
+                    <XAxis
+                      dataKey="time"
+                      tick={{ fontSize: 10, fill: "#6b7280" }}
+                      stroke="#d1d5db"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12, fill: "#6b7280" }}
+                      stroke="#d1d5db"
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "#fff",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="valor"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      dot={{ r: 3, fill: "#10b981" }}
+                      connectNulls={true}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
         )}
