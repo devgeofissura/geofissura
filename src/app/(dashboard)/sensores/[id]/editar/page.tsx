@@ -20,20 +20,29 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
+  const [form, setForm] = useState({
+    tipoSensor: "",
+    nome: "",
+    descricao: "",
+    modelo: "",
+    unidade: "",
+    fabricante: "",
+    valorMensal: "",
+  })
 
   useEffect(() => {
     fetch(`/api/sensores/${params.id}`)
       .then((r) => r.json())
       .then((data) => {
-        const form = document.getElementById("form") as HTMLFormElement
-        if (!form) return
-        ;(form.elements.namedItem("tipoSensor") as HTMLInputElement).value = data.tipoSensor
-        ;(form.elements.namedItem("nome") as HTMLInputElement).value = data.nome
-        ;(form.elements.namedItem("descricao") as HTMLInputElement).value = data.descricao ?? ""
-        ;(form.elements.namedItem("modelo") as HTMLInputElement).value = data.modelo ?? ""
-        ;(form.elements.namedItem("unidade") as HTMLInputElement).value = data.unidade ?? ""
-        ;(form.elements.namedItem("fabricante") as HTMLInputElement).value = data.fabricante ?? ""
-        ;(form.elements.namedItem("valorMensal") as HTMLInputElement).value = data.valorMensal ?? "0"
+        setForm({
+          tipoSensor: data.tipoSensor ?? "",
+          nome: data.nome ?? "",
+          descricao: data.descricao ?? "",
+          modelo: data.modelo ?? "",
+          unidade: data.unidade ?? "",
+          fabricante: data.fabricante ?? "",
+          valorMensal: data.valorMensal ?? "0",
+        })
         setLoadingData(false)
       })
       .catch(() => {
@@ -42,25 +51,19 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
       })
   }, [params.id, router])
 
+  function set(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
-
-    const form = new FormData(e.currentTarget)
 
     try {
       const res = await fetch(`/api/sensores/${params.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tipoSensor: form.get("tipoSensor"),
-          nome: form.get("nome"),
-          descricao: form.get("descricao") || null,
-          modelo: form.get("modelo") || null,
-          unidade: form.get("unidade") || null,
-          fabricante: form.get("fabricante") || null,
-          valorMensal: form.get("valorMensal") || "0",
-        }),
+        body: JSON.stringify(form),
       })
 
       if (!res.ok) throw new Error(await res.text())
@@ -87,10 +90,17 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
       <div>
         <h1 className="text-2xl font-bold">Editar Sensor</h1>
       </div>
-      <form id="form" onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="tipoSensor">Tipo</Label>
-          <select id="tipoSensor" name="tipoSensor" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
+          <select
+            id="tipoSensor"
+            value={form.tipoSensor}
+            onChange={(e) => set("tipoSensor", e.target.value)}
+            required
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
+          >
+            <option value="">Selecione...</option>
             {tiposSensor.map((t) => (
               <option key={t} value={t}>{t}</option>
             ))}
@@ -98,28 +108,28 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
         </div>
         <div className="space-y-2">
           <Label htmlFor="nome">Nome</Label>
-          <Input id="nome" name="nome" required />
+          <Input id="nome" value={form.nome} onChange={(e) => set("nome", e.target.value)} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="descricao">Descrição</Label>
-          <Input id="descricao" name="descricao" />
+          <Input id="descricao" value={form.descricao} onChange={(e) => set("descricao", e.target.value)} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="modelo">Modelo</Label>
-            <Input id="modelo" name="modelo" />
+            <Input id="modelo" value={form.modelo} onChange={(e) => set("modelo", e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="unidade">Unidade</Label>
-            <Input id="unidade" name="unidade" />
+            <Input id="unidade" value={form.unidade} onChange={(e) => set("unidade", e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="fabricante">Fabricante</Label>
-            <Input id="fabricante" name="fabricante" />
+            <Input id="fabricante" value={form.fabricante} onChange={(e) => set("fabricante", e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="valorMensal">Valor mensal (R$)</Label>
-            <Input id="valorMensal" name="valorMensal" type="number" step="0.01" min="0" />
+            <Input id="valorMensal" type="number" step="0.01" min="0" value={form.valorMensal} onChange={(e) => set("valorMensal", e.target.value)} />
           </div>
         </div>
         <div className="flex gap-2">

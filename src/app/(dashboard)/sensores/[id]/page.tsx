@@ -1,47 +1,125 @@
-import { getSession } from "@/lib/cliente"
-import { db } from "@/lib/db"
-import { sensores } from "@/lib/db/schema/sensores"
-import { edificacoes } from "@/lib/db/schema/edificacoes"
-import { clientes } from "@/lib/db/schema/clientes"
-import { leituras } from "@/lib/db/schema/leituras"
-import { eq, and, desc, sql } from "drizzle-orm"
-import { notFound } from "next/navigation"
-import Link from "next/link"
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Pencil, Cpu, Building2, User, Calendar, Ruler, Hash, Package, Factory, DollarSign } from "lucide-react"
-import { DeleteButton } from "@/components/ui/delete-button"
+import { Pencil, Cpu, Building2, User, Calendar, Ruler, Hash, Package, Factory, DollarSign, AlertTriangle, Trash2, Loader2 } from "lucide-react"
 import { SensorReadingsChart } from "./sensor-chart"
+import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
-interface Props {
-  params: { id: string }
-}
+export default function SensorDetalhePage({ params }: { params: { id: string } }) {
+  const router = useRouter()
+  const { data: session } = useSession()
+  const [sensor, setSensor] = useState<any>(null)
+  const [edificacao, setEdificacao] = useState<any>(null)
+  const [cliente, setCliente] = useState<any>(null)
+  const [leituras, setLeituras] = useState<any[]>([])
+  const [loadingAction, setLoadingAction] = useState(false)
 
-export default async function SensorDetalhePage({ params }: Props) {
-  const { session, clienteId, isSuper } = await getSession()
-  if (!session) notFound()
+  const role = (session?.user as any)?.role ?? ""
+  const canEdit = role === "SUPER" || role === "ADMIN"
+  const canHardDelete = role === "SUPER"
 
-  const conditions1 = [eq(sensores.id, Number(params.id))]
-  if (!isSuper) conditions1.push(eq(sensores.clienteId, clienteId!))
-  const sensor = await db.query.sensores.findFirst({
-    where: and(...conditions1),
-  })
-  if (!sensor) notFound()
+  useEffect(() => {
+    async function load() {
+      try {
+        const [sensorRes, leiturasRes] = await Promise.all([
+          fetch(`/api/sensores/${params.id}`),
+          fetch(`/api/sensores/${params.id}/leituras`),
+        ])
+        if (!sensorRes.ok) { router.push("/sensores"); return }
+        const s = await sensorRes.json()
+        setSensor(s)
+        const l = await leiturasRes.json()
+        setLeituras(l)
+        try {
+          const eRes = await fetch(`/api/edificacoes/${s.edificacaoId}`)
+          if (eRes.ok) setEdificacao(await eRes.json())
+        } catch {}
+        try {
+          const cRes = await fetch(`/api/clientes/${s.clienteId}`)
+          if (cRes.ok) setCliente(await cRes.json())
+        } catch {}
+      } catch {
+        router.push("/sensores")
+      }
+    }
+    load()
+  }, [params.id, router])
 
-  const [edificacao] = await db.select({ nome: edificacoes.nome }).from(edificacoes).where(eq(edificacoes.id, sensor.edificacaoId))
-  const [cliente] = await db.select({ nome: clientes.nome }).from(clientes).where(eq(clientes.id, sensor.clienteId))
+  async function handleDesativar() {
+    if (!confirm("Desativar este sensor?")) return
+    setLoadingAction(true)
+    try {
+      const res = await fetch(`/api/sensores/${params.id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error()
+      toast.success("Sensor desativado")
+      const updated = await res.json()
+      setSensor((prev: any) => ({ ...prev, ativo: "N" }))
+    } catch {
+      toast.error("Erro ao desativar sensor")
+    } finally {
+      setLoadingAction(false)
+    }
+  }
 
-  const conditions2 = [eq(leituras.sensorId, sensor.id)]
-  if (!isSuper) conditions2.push(eq(leituras.clienteId, clienteId!))
-  const ultimasLeituras = await db.select()
-    .from(leituras)
-    .where(and(...conditions2))
-    .orderBy(desc(leituras.lidaEm))
-    .limit(50)
+  async function handleReativar() {
+    setLoadingAction(true)
+    try {
+      const res = await fetch(`/api/sensores/${params.id}/reativar`, { method: "POST" })
+      if (!res.ok) throw new Error()
+      toast.success("Sensor reativado")
+      setSensor((prev: any) => ({ ...prev, ativo: "S" }))
+    } catch {
+      toast.error("Erro ao reativar sensor")
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
+  async function handleExcluirPermanente() {
+    if (!confirm("Tem certeza? Esta ação não pode ser desfeita.")) return
+    setLoadingAction(true)
+    try {
+      const res = await fetch(`/api/sensores/${params.id}?force=true`, { method: "DELETE" })
+      if (!res.ok) throw new Error()
+      toast.success("Sensor excluído permanentemente")
+      router.push("/sensores")
+    } catch {
+      toast.error("Erro ao excluir sensor")
+    } finally {
+      setLoadingAction(false)
+    }
+  }
+
+  if (!sensor) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-[var(--brand)]" />
+      </div>
+    )
+  }
 
   const dadosArray = toArray(sensor.dados)
 
   return (
     <div className="space-y-6">
+      {sensor.ativo === "N" && (
+        <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-center gap-2 text-amber-800">
+            <AlertTriangle className="h-5 w-5" />
+            <p className="text-sm font-medium">Este sensor está inativo</p>
+          </div>
+          {canEdit && (
+            <Button size="sm" onClick={handleReativar} disabled={loadingAction}>
+              {loadingAction && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+              Reativar
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-[var(--brand)]/10 p-2">
@@ -52,7 +130,7 @@ export default async function SensorDetalhePage({ params }: Props) {
               <span className="rounded bg-[var(--brand)]/10 px-2 py-0.5 text-xs font-medium text-[var(--brand)]">
                 {sensor.tipoSensor}
               </span>
-              <span className="text-xs text-[var(--text-secondary)]">
+              <span className={`text-xs ${sensor.ativo === "S" ? "text-emerald-600" : "text-amber-600"}`}>
                 {sensor.ativo === "S" ? "Ativo" : "Inativo"}
               </span>
             </div>
@@ -62,22 +140,33 @@ export default async function SensorDetalhePage({ params }: Props) {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href={`/sensores/${params.id}/editar`}>
-            <Button variant="outline" size="sm">
-              <Pencil className="mr-1 h-3 w-3" />
-              Editar
+        {canEdit && (
+          <div className="flex items-center gap-2">
+            <a href={`/sensores/${params.id}/editar`}>
+              <Button variant="outline" size="sm">
+                <Pencil className="mr-1 h-3 w-3" />
+                Editar
+              </Button>
+            </a>
+            <Button variant="outline" size="sm" onClick={handleDesativar} disabled={loadingAction || sensor.ativo === "N"}>
+              {loadingAction && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+              Desativar
             </Button>
-          </Link>
-          <DeleteButton apiPath={`/api/sensores/${params.id}`} redirectTo="/sensores" />
-        </div>
+            {canHardDelete && sensor.ativo === "N" && (
+              <Button variant="destructive" size="sm" onClick={handleExcluirPermanente} disabled={loadingAction}>
+                <Trash2 className="mr-1 h-3 w-3" />
+                Excluir
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <InfoCard icon={Hash} label="ID" value={`#${sensor.id}`} />
         <InfoCard icon={Building2} label="Edificação" value={edificacao?.nome ?? "-"} />
         <InfoCard icon={User} label="Cliente" value={cliente?.nome ?? "-"} />
-        <InfoCard icon={Calendar} label="Instalação" value={sensor.createdAt?.toLocaleDateString("pt-BR") ?? "-"} />
+        <InfoCard icon={Calendar} label="Instalação" value={sensor.createdAt ? new Date(sensor.createdAt).toLocaleDateString("pt-BR") : "-"} />
         {sensor.modelo && <InfoCard icon={Package} label="Modelo" value={sensor.modelo} />}
         {sensor.unidade && <InfoCard icon={Ruler} label="Unidade" value={sensor.unidade} />}
         {sensor.fabricante && <InfoCard icon={Factory} label="Fabricante" value={sensor.fabricante} />}
@@ -100,17 +189,17 @@ export default async function SensorDetalhePage({ params }: Props) {
         </div>
       )}
 
-      <SensorReadingsChart data={ultimasLeituras} />
+      <SensorReadingsChart data={leituras} />
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-sm">
         <div className="p-4 border-b border-[var(--border)]">
           <h2 className="text-sm font-medium text-[var(--text-secondary)]">Últimas Leituras</h2>
         </div>
-        {ultimasLeituras.length === 0 ? (
+        {leituras.length === 0 ? (
           <div className="p-6 text-center text-sm text-[var(--text-secondary)]">Nenhuma leitura registrada</div>
         ) : (
           <div className="divide-y divide-[var(--border)]">
-            {ultimasLeituras.map((leitura) => (
+            {leituras.map((leitura: any) => (
               <div key={leitura.id} className="flex items-center justify-between p-4">
                 <div>
                   <p className="text-lg font-bold">
@@ -119,7 +208,7 @@ export default async function SensorDetalhePage({ params }: Props) {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-[var(--text-secondary)]">
-                    {leitura.lidaEm?.toLocaleString("pt-BR")}
+                    {leitura.lidaEm ? new Date(leitura.lidaEm).toLocaleString("pt-BR") : ""}
                   </p>
                   {leitura.topicoMqtt && (
                     <p className="text-xs text-[var(--text-secondary)] truncate max-w-[200px]">
@@ -136,6 +225,11 @@ export default async function SensorDetalhePage({ params }: Props) {
   )
 }
 
+function toArray(dados: unknown): [string, unknown][] {
+  if (typeof dados !== "object" || dados === null || Array.isArray(dados)) return []
+  return Object.entries(dados)
+}
+
 function InfoCard({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm">
@@ -150,7 +244,4 @@ function InfoCard({ icon: Icon, label, value }: { icon: any; label: string; valu
   )
 }
 
-function toArray(dados: unknown): [string, unknown][] {
-  if (typeof dados !== "object" || dados === null || Array.isArray(dados)) return []
-  return Object.entries(dados)
-}
+

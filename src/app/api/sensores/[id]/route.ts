@@ -56,10 +56,16 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const delConditions = [eq(sensores.id, Number(params.id))]
-    if (!isSuper) delConditions.push(eq(sensores.clienteId, clienteId!))
-    await db.delete(sensores)
-      .where(and(...delConditions))
+    const conditions = [eq(sensores.id, Number(params.id))]
+    if (!isSuper) conditions.push(eq(sensores.clienteId, clienteId!))
+
+    const force = req.nextUrl.searchParams.get("force") === "true"
+
+    if (force && isSuper) {
+      await db.delete(sensores).where(and(...conditions))
+    } else {
+      await db.update(sensores).set({ ativo: "N" }).where(and(...conditions))
+    }
 
     return NextResponse.json({ ok: true })
   } catch (err) {
