@@ -87,8 +87,8 @@ async function main() {
     `
     for (const s of tiposSensor) {
       await sql`
-        INSERT INTO sensores (cliente_id, edificacao_id, tipo_sensor, nome, dados)
-        VALUES (${t1.id}, ${e.id}, ${s.tipo}, ${s.nome} || ' #' || ${e.id}, ${sql.json({ unidade: s.unidade, fabricante: "GeoSense", modelo: "GS-" + s.tipo.substring(0, 4).toUpperCase(), instalacao: new Date().toISOString().split("T")[0] })})
+        INSERT INTO sensores (cliente_id, edificacao_id, tipo_sensor, nome, modelo, unidade, fabricante, valor_mensal, dados)
+        VALUES (${t1.id}, ${e.id}, ${s.tipo}, ${s.nome} || ' #' || ${e.id}, ${'GS-' + s.tipo.substring(0, 4).toUpperCase()}, ${s.unidade}, 'GeoSense', 0, ${sql.json({ instalacao: new Date().toISOString().split("T")[0] })})
       `
     }
   }
@@ -101,8 +101,8 @@ async function main() {
     `
     for (const s of tiposSensor) {
       await sql`
-        INSERT INTO sensores (cliente_id, edificacao_id, tipo_sensor, nome, dados)
-        VALUES (${t2.id}, ${e.id}, ${s.tipo}, ${s.nome} || ' #' || ${e.id}, ${sql.json({ unidade: s.unidade, fabricante: "GeoSense", modelo: "GS-" + s.tipo.substring(0, 4).toUpperCase(), instalacao: new Date().toISOString().split("T")[0] })})
+        INSERT INTO sensores (cliente_id, edificacao_id, tipo_sensor, nome, modelo, unidade, fabricante, valor_mensal, dados)
+        VALUES (${t2.id}, ${e.id}, ${s.tipo}, ${s.nome} || ' #' || ${e.id}, ${'GS-' + s.tipo.substring(0, 4).toUpperCase()}, ${s.unidade}, 'GeoSense', 0, ${sql.json({ instalacao: new Date().toISOString().split("T")[0] })})
       `
     }
   }

@@ -14,13 +14,8 @@ interface SensorItem {
   nome: string
   descricao: string | null
   ativo: string
+  valorMensal: string | null
   dados: Record<string, unknown>
-}
-
-interface PrecoSensor {
-  id: number
-  sensorId: number
-  valorMensal: string
 }
 
 const tiposSensor = [
@@ -33,7 +28,6 @@ const tiposSensor = [
 
 export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: number; isSuper: boolean }) {
   const [sensores, setSensores] = useState<SensorItem[]>([])
-  const [precos, setPrecos] = useState<Record<number, string>>({})
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -45,19 +39,9 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
     fetch("/api/sensores")
       .then(r => r.json())
       .then((lista: SensorItem[]) => {
-        const filtrados = Array.isArray(lista) ? lista.filter(s => s.edificacaoId === edificacaoId) : []
-        setSensores(filtrados)
-        if (filtrados.length > 0) {
-          return fetch(`/api/cobranca/precos?sensorIds=${filtrados.map(s => s.id).join(",")}`).then(r => r.json())
+        if (Array.isArray(lista)) {
+          setSensores(lista.filter(s => s.edificacaoId === edificacaoId))
         }
-        return []
-      })
-      .then((prices: PrecoSensor[]) => {
-        const map: Record<number, string> = {}
-        if (Array.isArray(prices)) {
-          for (const p of prices) map[p.sensorId] = p.valorMensal
-        }
-        setPrecos(map)
       })
       .catch(() => toast.error("Erro ao carregar sensores"))
       .finally(() => setLoading(false))
@@ -111,13 +95,13 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
     finally { setSaving(false) }
   }
 
-  async function handleSavePreco(sensorId: number) {
-    setSavingPreco(sensorId)
+  async function handleSavePreco(sensor: SensorItem) {
+    setSavingPreco(sensor.id)
     try {
-      const res = await fetch("/api/cobranca/precos", {
+      const res = await fetch(`/api/sensores/${sensor.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sensorId, valorMensal: precos[sensorId] || "0" }),
+        body: JSON.stringify({ valorMensal: sensor.valorMensal || "0" }),
       })
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "Erro"); return }
       toast.success("Valor salvo")
@@ -234,8 +218,8 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
                             type="number"
                             step="0.01"
                             min="0"
-                            value={precos[sensor.id] ?? ""}
-                            onChange={(e) => setPrecos((v) => ({ ...v, [sensor.id]: e.target.value }))}
+                            value={sensor.valorMensal ?? ""}
+                            onChange={(e) => setSensores((prev) => prev.map((s) => s.id === sensor.id ? { ...s, valorMensal: e.target.value } : s))}
                             className="w-20 pl-6 text-xs"
                             placeholder="0,00"
                           />
@@ -243,7 +227,7 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleSavePreco(sensor.id)}
+                          onClick={() => handleSavePreco(sensor)}
                           disabled={savingPreco === sensor.id}
                         >
                           {savingPreco === sensor.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
@@ -257,8 +241,8 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
                       </>
                     ) : (
                       <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">
-                        {precos[sensor.id]
-                          ? `R$ ${Number(precos[sensor.id]).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                        {sensor.valorMensal
+                          ? `R$ ${Number(sensor.valorMensal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
                           : "—"}
                       </span>
                     )}

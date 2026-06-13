@@ -8,7 +8,7 @@ import { eq, and, desc, sql } from "drizzle-orm"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Pencil, Cpu, Building2, User, Calendar, Ruler, Hash } from "lucide-react"
+import { Pencil, Cpu, Building2, User, Calendar, Ruler, Hash, Package, Factory, DollarSign } from "lucide-react"
 import { DeleteButton } from "@/components/ui/delete-button"
 import { SensorReadingsChart } from "./sensor-chart"
 
@@ -78,6 +78,10 @@ export default async function SensorDetalhePage({ params }: Props) {
         <InfoCard icon={Building2} label="Edificação" value={edificacao?.nome ?? "-"} />
         <InfoCard icon={User} label="Cliente" value={cliente?.nome ?? "-"} />
         <InfoCard icon={Calendar} label="Instalação" value={sensor.createdAt?.toLocaleDateString("pt-BR") ?? "-"} />
+        {sensor.modelo && <InfoCard icon={Package} label="Modelo" value={sensor.modelo} />}
+        {sensor.unidade && <InfoCard icon={Ruler} label="Unidade" value={sensor.unidade} />}
+        {sensor.fabricante && <InfoCard icon={Factory} label="Fabricante" value={sensor.fabricante} />}
+        <InfoCard icon={DollarSign} label="Valor Mensal" value={sensor.valorMensal ? `R$ ${Number(sensor.valorMensal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"} />
       </div>
 
       {dadosArray.length > 0 && (
@@ -86,7 +90,7 @@ export default async function SensorDetalhePage({ params }: Props) {
             <h2 className="text-sm font-medium text-[var(--text-secondary)]">Dados do Sensor</h2>
           </div>
           <div className="divide-y divide-[var(--border)]">
-            {dadosArray.map(([chave, valor]) => (
+            {dadosArray.filter(([k]) => !["modelo", "unidade", "fabricante", "instalacao"].includes(k)).map(([chave, valor]) => (
               <div key={chave} className="flex items-center justify-between p-4">
                 <span className="text-sm font-medium">{chave}</span>
                 <span className="text-sm text-[var(--text-secondary)]">{String(valor)}</span>

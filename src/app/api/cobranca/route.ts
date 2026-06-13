@@ -3,7 +3,6 @@ import { db } from "@/lib/db"
 import { clientes } from "@/lib/db/schema/clientes"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
 import { sensores } from "@/lib/db/schema/sensores"
-import { precosSensor } from "@/lib/db/schema/precos-sensor"
 import { planosDados } from "@/lib/db/schema/planos-dados"
 import { equipamentos } from "@/lib/db/schema/equipamentos"
 import { getSession } from "@/lib/cliente"
@@ -23,12 +22,11 @@ export async function GET() {
       slug: clientes.slug,
       totalSensores: sql<number>`count(distinct ${sensores.id})`,
       sensoresAtivos: sql<number>`count(distinct case when ${sensores.ativo} = 'S' then ${sensores.id} end)`,
-      totalSensoresValor: sql<string>`coalesce(sum(${precosSensor.valorMensal}), 0)`,
+      totalSensoresValor: sql<string>`coalesce(sum(${sensores.valorMensal}), 0)`,
     })
       .from(clientes)
       .leftJoin(edificacoes, eq(edificacoes.clienteId, clientes.id))
       .leftJoin(sensores, eq(sensores.edificacaoId, edificacoes.id))
-      .leftJoin(precosSensor, eq(precosSensor.sensorId, sensores.id))
       .groupBy(clientes.id)
       .orderBy(clientes.nome)
 

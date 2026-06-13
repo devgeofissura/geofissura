@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,27 +8,43 @@ import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
+const tiposSensor = [
+  "inclinometro",
+  "fissurometro",
+  "termometro",
+  "piezometro",
+  "extensometro",
+]
+
 export default function NovoSensorPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [edificacoes, setEdificacoes] = useState<{ id: number; nome: string }[]>([])
+
+  useEffect(() => {
+    fetch("/api/edificacoes").then(r => r.json()).then(setEdificacoes).catch(() => {})
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
 
     const form = new FormData(e.currentTarget)
-    const data = {
-      edificacaoId: Number(form.get("edificacaoId")),
-      tipoSensor: form.get("tipoSensor") as string,
-      nome: form.get("nome") as string,
-      descricao: form.get("descricao") as string,
-    }
 
     try {
       const res = await fetch("/api/sensores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          edificacaoId: Number(form.get("edificacaoId")),
+          tipoSensor: form.get("tipoSensor"),
+          nome: form.get("nome"),
+          descricao: form.get("descricao") || null,
+          modelo: form.get("modelo") || null,
+          unidade: form.get("unidade") || null,
+          fabricante: form.get("fabricante") || null,
+          valorMensal: form.get("valorMensal") || "0",
+        }),
       })
 
       if (!res.ok) throw new Error(await res.text())
@@ -52,17 +68,22 @@ export default function NovoSensorPage() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="edificacaoId">ID da Edificação</Label>
-          <Input id="edificacaoId" name="edificacaoId" type="number" placeholder="1" required />
+          <Label htmlFor="edificacaoId">Edificação</Label>
+          <select id="edificacaoId" name="edificacaoId" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
+            <option value="">Selecione...</option>
+            {edificacoes.map((ed) => (
+              <option key={ed.id} value={ed.id}>{ed.nome}</option>
+            ))}
+          </select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="tipoSensor">Tipo</Label>
-          <Input
-            id="tipoSensor"
-            name="tipoSensor"
-            placeholder="Fissura, Inclinacao, Temperatura, Umidade..."
-            required
-          />
+          <select id="tipoSensor" name="tipoSensor" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
+            <option value="">Selecione...</option>
+            {tiposSensor.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="nome">Nome</Label>
@@ -71,6 +92,24 @@ export default function NovoSensorPage() {
         <div className="space-y-2">
           <Label htmlFor="descricao">Descrição</Label>
           <Input id="descricao" name="descricao" placeholder="Descrição opcional" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="modelo">Modelo</Label>
+            <Input id="modelo" name="modelo" placeholder="GS-INC" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="unidade">Unidade</Label>
+            <Input id="unidade" name="unidade" placeholder="mm, °C, graus..." />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="fabricante">Fabricante</Label>
+            <Input id="fabricante" name="fabricante" placeholder="GeoSense" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="valorMensal">Valor mensal (R$)</Label>
+            <Input id="valorMensal" name="valorMensal" type="number" step="0.01" min="0" placeholder="0,00" />
+          </div>
         </div>
         <div className="flex gap-2">
           <Button type="submit" disabled={loading}>

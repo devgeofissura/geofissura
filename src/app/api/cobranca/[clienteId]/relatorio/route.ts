@@ -3,7 +3,6 @@ import { db } from "@/lib/db"
 import { clientes } from "@/lib/db/schema/clientes"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
 import { sensores } from "@/lib/db/schema/sensores"
-import { precosSensor } from "@/lib/db/schema/precos-sensor"
 import { planosDados } from "@/lib/db/schema/planos-dados"
 import { equipamentos } from "@/lib/db/schema/equipamentos"
 import { getSession } from "@/lib/cliente"
@@ -33,10 +32,9 @@ export async function GET(_req: Request, { params }: { params: { clienteId: stri
         tipoSensor: sensores.tipoSensor,
         ativo: sensores.ativo,
         createdAt: sensores.createdAt,
-        valorMensal: precosSensor.valorMensal,
+        valorMensal: sensores.valorMensal,
       })
         .from(sensores)
-        .leftJoin(precosSensor, eq(precosSensor.sensorId, sensores.id))
         .where(eq(sensores.edificacaoId, ed.id))
         .orderBy(sensores.nome)
 

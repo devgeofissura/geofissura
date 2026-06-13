@@ -10,7 +10,6 @@ import * as notificacoesConfig from "./schema/notificacoes-config"
 import * as notificacoesRegras from "./schema/notificacoes-regras"
 import * as notificacoesRegraDestinatarios from "./schema/notificacoes-regra-destinatarios"
 import * as notificacoes from "./schema/notificacoes"
-import * as precosSensor from "./schema/precos-sensor"
 import * as planosDados from "./schema/planos-dados"
 import * as equipamentos from "./schema/equipamentos"
 
@@ -22,5 +21,5 @@ if (!connectionString) {
 
 const client = postgres(connectionString, { prepare: false })
 export const db = drizzle(client, {
-  schema: { ...clientes, ...usuarios, ...edificacoes, ...sensores, ...leituras, ...documentos, ...notificacoesConfig, ...notificacoesRegras, ...notificacoesRegraDestinatarios, ...notificacoes, ...precosSensor, ...planosDados, ...equipamentos },
+  schema: { ...clientes, ...usuarios, ...edificacoes, ...sensores, ...leituras, ...documentos, ...notificacoesConfig, ...notificacoesRegras, ...notificacoesRegraDestinatarios, ...notificacoes, ...planosDados, ...equipamentos },
 })

@@ -13,7 +13,6 @@ interface SensorPreco {
   nome: string
   tipoSensor: string
   ativo: string
-  precoId: number | null
   valorMensal: string | null
 }
 
@@ -105,10 +104,10 @@ export default function CobrancaClientePage() {
   async function handleSaveSensor(sensorId: number) {
     setSavingSensor(sensorId)
     try {
-      const res = await fetch("/api/cobranca/precos", {
+      const res = await fetch(`/api/sensores/${sensorId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sensorId, valorMensal: sensorValues[sensorId] || "0" }),
+        body: JSON.stringify({ valorMensal: sensorValues[sensorId] || "0" }),
       })
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "Erro"); return }
       toast.success("Valor do sensor salvo")

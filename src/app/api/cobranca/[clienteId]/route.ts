@@ -3,7 +3,6 @@ import { db } from "@/lib/db"
 import { clientes } from "@/lib/db/schema/clientes"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
 import { sensores } from "@/lib/db/schema/sensores"
-import { precosSensor } from "@/lib/db/schema/precos-sensor"
 import { planosDados } from "@/lib/db/schema/planos-dados"
 import { equipamentos } from "@/lib/db/schema/equipamentos"
 import { getSession } from "@/lib/cliente"
@@ -32,11 +31,9 @@ export async function GET(_req: Request, { params }: { params: { clienteId: stri
         nome: sensores.nome,
         tipoSensor: sensores.tipoSensor,
         ativo: sensores.ativo,
-        precoId: precosSensor.id,
-        valorMensal: precosSensor.valorMensal,
+        valorMensal: sensores.valorMensal,
       })
         .from(sensores)
-        .leftJoin(precosSensor, eq(precosSensor.sensorId, sensores.id))
         .where(eq(sensores.edificacaoId, ed.id))
         .orderBy(sensores.nome)
 
@@ -54,12 +51,11 @@ export async function GET(_req: Request, { params }: { params: { clienteId: stri
     }))
 
     const totalSensores = await db.select({
-      total: sql<string>`coalesce(sum(${precosSensor.valorMensal}), 0)`,
+      total: sql<string>`coalesce(sum(${sensores.valorMensal}), 0)`,
     })
-      .from(precosSensor)
-      .innerJoin(sensores, eq(sensores.id, precosSensor.sensorId))
+      .from(sensores)
       .innerJoin(edificacoes, eq(edificacoes.id, sensores.edificacaoId))
-      .where(eq(edificacoes.clienteId, clienteId))
+      .where(sql`${edificacoes.clienteId} = ${clienteId} and ${sensores.ativo} = 'S'`)
       .then(r => r[0]?.total ?? "0")
 
     const totalPlanos = await db.select({
