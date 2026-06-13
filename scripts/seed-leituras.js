@@ -47,11 +47,11 @@ async function main() {
   let total = 0
 
   for (const sensor of sensores) {
-    // Gera 10 leituras por sensor com timestamps espaçados
+    // Gera 30 leituras por sensor com timestamps espaçados
     const leituras = []
     const now = Date.now()
-    for (let i = 9; i >= 0; i--) {
-      const ts = new Date(now - i * 3 * 60 * 60 * 1000) // 3 em 3 horas
+    for (let i = 29; i >= 0; i--) {
+      const ts = new Date(now - i * 60 * 60 * 1000) // 1 em 1 hora
       const leitura = gerarLeitura(sensor.tipo_sensor)
       leituras.push({
         cliente_id: sensor.cliente_id,
