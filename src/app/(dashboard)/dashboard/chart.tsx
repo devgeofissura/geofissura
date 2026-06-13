@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts"
@@ -33,13 +34,15 @@ export function ReadingsChart({
   sensorNomes,
   sensores,
   edificacoes,
+  edificacaoId,
 }: {
   data: Leitura[]
   sensorNomes: Record<number, string>
   sensores: SensorInfo[]
   edificacoes: EdificacaoInfo[]
+  edificacaoId: number | null
 }) {
-  const [selectedEdificacaoId, setSelectedEdificacaoId] = useState<number | null>(null)
+  const router = useRouter()
   const [modalSensorId, setModalSensorId] = useState<number | null>(null)
 
   const dados = useMemo(() => {
@@ -55,12 +58,12 @@ export function ReadingsChart({
   }, [dados])
 
   const sensorIdsVisiveis = useMemo(() => {
-    if (!selectedEdificacaoId) return todosSensorIds
+    if (!edificacaoId) return todosSensorIds
     const idsNaEdificacao = new Set(
-      sensores.filter((s) => s.edificacaoId === selectedEdificacaoId).map((s) => s.id)
+      sensores.filter((s) => s.edificacaoId === edificacaoId).map((s) => s.id)
     )
     return todosSensorIds.filter((id) => idsNaEdificacao.has(id))
-  }, [selectedEdificacaoId, todosSensorIds, sensores])
+  }, [edificacaoId, todosSensorIds, sensores])
 
   const chartData = useMemo(() => {
     if (sensorIdsVisiveis.length === 0) return []
@@ -116,10 +119,11 @@ export function ReadingsChart({
             Leituras ao Longo do Tempo
           </h2>
           <select
-            value={selectedEdificacaoId ?? ""}
-            onChange={(e) =>
-              setSelectedEdificacaoId(e.target.value ? Number(e.target.value) : null)
-            }
+            value={edificacaoId ?? ""}
+            onChange={(e) => {
+              const val = e.target.value
+              router.push(val ? `/dashboard?edificacao_id=${val}` : "/dashboard")
+            }}
             className="h-8 rounded-md border border-gray-300 bg-white px-2 text-xs text-gray-900"
           >
             <option value="">Todas as edificações</option>

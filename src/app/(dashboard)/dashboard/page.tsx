@@ -8,10 +8,20 @@ import { eq, and, inArray, sql } from "drizzle-orm"
 import { DashboardCards } from "@/components/dashboard-cards"
 import { ReadingsChart } from "./chart"
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { edificacao_id?: string }
+}) {
   const { session, clienteId, isSuper } = await getSession()
   if (!session) {
     return <p>Não autorizado</p>
+  }
+
+  let edificacaoId: number | null = null
+  if (searchParams?.edificacao_id) {
+    const parsed = Number(searchParams.edificacao_id)
+    if (!isNaN(parsed)) edificacaoId = parsed
   }
 
   function clienteFilter(table: any) {
@@ -32,13 +42,29 @@ export default async function DashboardPage() {
     db.select({ count: sql<number>`count(*)` }).from(notificacoes).where(and(...onlyCliente(notificacoes))),
   ])
 
-  const [ultimasLeituras, listaEdificacoes, listaSensores] = await Promise.all([
+  const [ultimasLeiturasRaw, listaEdificacoes, listaSensores] = await Promise.all([
     db.select().from(leituras).where(and(...onlyCliente(leituras))).orderBy(sql`lida_em DESC`).limit(50),
     db.select({ id: edificacoes.id, nome: edificacoes.nome }).from(edificacoes).where(and(...clienteFilter(edificacoes))),
     db.select({ id: sensores.id, nome: sensores.nome, edificacaoId: sensores.edificacaoId }).from(sensores).where(and(...clienteFilter(sensores))),
   ])
 
-  const sensorIds = Array.from(new Set(ultimasLeituras.map((l) => l.sensorId)))
+  let ultimasLeituras = ultimasLeiturasRaw
+  if (edificacaoId) {
+    const sensorIdsDoPredio = listaSensores
+      .filter((s) => s.edificacaoId === edificacaoId)
+      .map((s) => s.id)
+    if (sensorIdsDoPredio.length > 0) {
+      ultimasLeituras = await db
+        .select()
+        .from(leituras)
+        .where(and(...onlyCliente(leituras), inArray(leituras.sensorId, sensorIdsDoPredio)))
+        .orderBy(sql`lida_em DESC`)
+        .limit(50)
+    } else {
+      ultimasLeituras = []
+    }
+  }
+
   const sensorNomes: Record<number, string> = {}
   for (const s of listaSensores) sensorNomes[s.id] = s.nome
 
@@ -65,6 +91,7 @@ export default async function DashboardPage() {
         sensorNomes={sensorNomes}
         sensores={listaSensores}
         edificacoes={listaEdificacoes}
+        edificacaoId={edificacaoId}
       />
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-sm">
