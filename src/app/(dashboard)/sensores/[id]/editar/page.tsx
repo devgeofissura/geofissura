@@ -98,11 +98,11 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
             value={form.tipoSensor}
             onChange={(e) => set("tipoSensor", e.target.value)}
             required
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
+            className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors"
           >
-            <option value="">Selecione...</option>
+            <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
             {tiposSensor.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>
             ))}
           </select>
         </div>

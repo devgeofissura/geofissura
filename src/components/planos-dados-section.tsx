@@ -106,9 +106,9 @@ export function PlanosDadosSection({ edificacaoId, isSuper }: { edificacaoId: nu
         <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm space-y-3">
           <div className="space-y-1">
             <Label htmlFor="operadora">Operadora</Label>
-            <select id="operadora" name="operadora" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
-              <option value="">Selecione...</option>
-              {operadoras.map(op => <option key={op} value={op}>{op}</option>)}
+            <select id="operadora" name="operadora" required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
+              <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
+              {operadoras.map(op => <option key={op} value={op} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{op}</option>)}
             </select>
           </div>
           <div className="space-y-1">
@@ -140,8 +140,8 @@ export function PlanosDadosSection({ edificacaoId, isSuper }: { edificacaoId: nu
                 <form key={plano.id} onSubmit={(e) => handleUpdate(e, plano.id)} className="p-4 space-y-3">
                   <div className="space-y-1">
                     <Label>Operadora</Label>
-                    <select name="operadora" defaultValue={plano.operadora} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
-                      {operadoras.map(op => <option key={op} value={op}>{op}</option>)}
+                    <select name="operadora" defaultValue={plano.operadora} required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
+                      {operadoras.map(op => <option key={op} value={op} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{op}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1">

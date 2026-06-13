@@ -134,9 +134,9 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
         <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm space-y-3">
           <div className="space-y-1">
             <Label htmlFor="tipoSensor">Tipo de Sensor</Label>
-            <select id="tipoSensor" name="tipoSensor" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
-              <option value="">Selecione...</option>
-              {tiposSensor.map(t => <option key={t} value={t}>{t}</option>)}
+            <select id="tipoSensor" name="tipoSensor" required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
+              <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
+              {tiposSensor.map(t => <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>)}
             </select>
           </div>
           <div className="space-y-1">
@@ -168,8 +168,8 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
                 <form key={sensor.id} onSubmit={(e) => handleUpdate(e, sensor.id)} className="p-4 space-y-3">
                   <div className="space-y-1">
                     <Label>Tipo</Label>
-                    <select name="tipoSensor" defaultValue={sensor.tipoSensor} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
-                      {tiposSensor.map(t => <option key={t} value={t}>{t}</option>)}
+                    <select name="tipoSensor" defaultValue={sensor.tipoSensor} required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
+                      {tiposSensor.map(t => <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1">

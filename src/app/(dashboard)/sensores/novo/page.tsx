@@ -69,19 +69,19 @@ export default function NovoSensorPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="edificacaoId">Edificação</Label>
-          <select id="edificacaoId" name="edificacaoId" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
-            <option value="">Selecione...</option>
+          <select id="edificacaoId" name="edificacaoId" required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
+            <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
             {edificacoes.map((ed) => (
-              <option key={ed.id} value={ed.id}>{ed.nome}</option>
+              <option key={ed.id} value={ed.id} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{ed.nome}</option>
             ))}
           </select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="tipoSensor">Tipo</Label>
-          <select id="tipoSensor" name="tipoSensor" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
-            <option value="">Selecione...</option>
+          <select id="tipoSensor" name="tipoSensor" required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
+            <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
             {tiposSensor.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>
             ))}
           </select>
         </div>

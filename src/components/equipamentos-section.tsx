@@ -124,9 +124,9 @@ export function EquipamentosSection({ edificacaoId, isSuper }: { edificacaoId: n
         <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm space-y-3">
           <div className="space-y-1">
             <Label htmlFor="tipo">Tipo</Label>
-            <select id="tipo" name="tipo" required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
-              <option value="">Selecione...</option>
-              {tiposEquipamento.map(t => <option key={t} value={t}>{t}</option>)}
+<select id="tipo" name="tipo" required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
+            <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
+            {tiposEquipamento.map(t => <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>)}
             </select>
           </div>
           <div className="space-y-1">
@@ -164,8 +164,8 @@ export function EquipamentosSection({ edificacaoId, isSuper }: { edificacaoId: n
                 <form key={eqp.id} onSubmit={(e) => handleUpdate(e, eqp.id)} className="p-4 space-y-3">
                   <div className="space-y-1">
                     <Label>Tipo</Label>
-                    <select name="tipo" defaultValue={eqp.tipo} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors">
-                      {tiposEquipamento.map(t => <option key={t} value={t}>{t}</option>)}
+                    <select name="tipo" defaultValue={eqp.tipo} required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
+                      {tiposEquipamento.map(t => <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1">
