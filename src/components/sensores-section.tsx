@@ -226,7 +226,7 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {isSuper && (
+                    {isSuper ? (
                       <>
                         <div className="relative">
                           <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-[var(--text-secondary)]" />
@@ -255,6 +255,12 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </>
+                    ) : (
+                      <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                        {precos[sensor.id]
+                          ? `R$ ${Number(precos[sensor.id]).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                          : "—"}
+                      </span>
                     )}
                   </div>
                 </div>

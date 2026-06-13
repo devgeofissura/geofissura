@@ -39,7 +39,9 @@ export default async function EdificacaoDetalhePage({ params }: Props) {
             <AlertTriangle className="h-4 w-4 shrink-0" />
             Esta edificação está <strong>desativada</strong>. Todos os sensores, planos e equipamentos também foram desativados.
           </div>
-          <ReativarButton apiPath={`/api/edificacoes/${params.id}/reativar`} redirectTo={`/edificacoes/${params.id}`} />
+          {isSuper && (
+            <ReativarButton apiPath={`/api/edificacoes/${params.id}/reativar`} redirectTo={`/edificacoes/${params.id}`} />
+          )}
         </div>
       )}
       <div className="flex items-start justify-between">
@@ -49,7 +51,7 @@ export default async function EdificacaoDetalhePage({ params }: Props) {
             <p className="text-sm text-[var(--text-secondary)]">{edificacao.endereco}</p>
           )}
         </div>
-        {edificacao.ativo === "S" && (
+        {edificacao.ativo === "S" && isSuper && (
           <div className="flex items-center gap-2">
             <Link href={`/edificacoes/${params.id}/editar`}>
               <Button variant="outline" size="sm">
