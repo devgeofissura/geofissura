@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Pencil } from "lucide-react"
 import { DeleteButton } from "@/components/ui/delete-button"
 import { DocumentosSection } from "@/components/documentos-section"
+import { PlanosDadosSection } from "@/components/planos-dados-section"
+import { EquipamentosSection } from "@/components/equipamentos-section"
 
 interface Props {
   params: { id: string }
@@ -80,6 +82,10 @@ export default async function EdificacaoDetalhePage({ params }: Props) {
           </div>
         )}
       </div>
+
+      <PlanosDadosSection edificacaoId={edificacao.id} />
+
+      <EquipamentosSection edificacaoId={edificacao.id} />
 
       <DocumentosSection edificacaoId={edificacao.id} />
     </div>

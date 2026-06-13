@@ -11,6 +11,8 @@ import * as notificacoesRegras from "./schema/notificacoes-regras"
 import * as notificacoesRegraDestinatarios from "./schema/notificacoes-regra-destinatarios"
 import * as notificacoes from "./schema/notificacoes"
 import * as precosSensor from "./schema/precos-sensor"
+import * as planosDados from "./schema/planos-dados"
+import * as equipamentos from "./schema/equipamentos"
 
 const connectionString = process.env.DATABASE_URL!
 
@@ -20,5 +22,5 @@ if (!connectionString) {
 
 const client = postgres(connectionString, { prepare: false })
 export const db = drizzle(client, {
-  schema: { ...clientes, ...usuarios, ...edificacoes, ...sensores, ...leituras, ...documentos, ...notificacoesConfig, ...notificacoesRegras, ...notificacoesRegraDestinatarios, ...notificacoes, ...precosSensor },
+  schema: { ...clientes, ...usuarios, ...edificacoes, ...sensores, ...leituras, ...documentos, ...notificacoesConfig, ...notificacoesRegras, ...notificacoesRegraDestinatarios, ...notificacoes, ...precosSensor, ...planosDados, ...equipamentos },
 })

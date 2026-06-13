@@ -4,6 +4,8 @@ import { clientes } from "@/lib/db/schema/clientes"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
 import { sensores } from "@/lib/db/schema/sensores"
 import { precosSensor } from "@/lib/db/schema/precos-sensor"
+import { planosDados } from "@/lib/db/schema/planos-dados"
+import { equipamentos } from "@/lib/db/schema/equipamentos"
 import { getSession } from "@/lib/cliente"
 import { eq, sql } from "drizzle-orm"
 import { apiError } from "@/lib/api-error"
@@ -38,9 +40,36 @@ export async function GET(_req: Request, { params }: { params: { clienteId: stri
         .where(eq(sensores.edificacaoId, ed.id))
         .orderBy(sensores.nome)
 
-      const totalEdificacao = sensoresList.reduce((acc, s) => acc + (parseFloat(s.valorMensal as string) || 0), 0)
+      const planosList = await db.select({
+        id: planosDados.id,
+        operadora: planosDados.operadora,
+        descricao: planosDados.descricao,
+        valorMensal: planosDados.valorMensal,
+        ativo: planosDados.ativo,
+        createdAt: planosDados.createdAt,
+      })
+        .from(planosDados)
+        .where(eq(planosDados.edificacaoId, ed.id))
+        .orderBy(planosDados.createdAt)
 
-      return { ...ed, sensores: sensoresList, totalEdificacao }
+      const equipList = await db.select({
+        id: equipamentos.id,
+        tipo: equipamentos.tipo,
+        descricao: equipamentos.descricao,
+        quantidade: equipamentos.quantidade,
+        valorUnitario: equipamentos.valorUnitario,
+        ativo: equipamentos.ativo,
+      })
+        .from(equipamentos)
+        .where(eq(equipamentos.edificacaoId, ed.id))
+        .orderBy(equipamentos.createdAt)
+
+      const totalSensores = sensoresList.reduce((acc, s) => acc + (parseFloat(s.valorMensal as string) || 0), 0)
+      const totalPlanos = planosList.reduce((acc, p) => acc + (parseFloat(p.valorMensal as string) || 0), 0)
+      const totalEquipamentos = equipList.reduce((acc, e) => acc + (e.quantidade * (parseFloat(e.valorUnitario as string) || 0)), 0)
+      const totalEdificacao = totalSensores + totalPlanos + totalEquipamentos
+
+      return { ...ed, sensores: sensoresList, planosDados: planosList, equipamentos: equipList, totalEdificacao }
     }))
 
     const totalGeral = result.reduce((acc, ed) => acc + ed.totalEdificacao, 0)

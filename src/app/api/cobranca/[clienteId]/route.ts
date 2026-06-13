@@ -4,6 +4,8 @@ import { clientes } from "@/lib/db/schema/clientes"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
 import { sensores } from "@/lib/db/schema/sensores"
 import { precosSensor } from "@/lib/db/schema/precos-sensor"
+import { planosDados } from "@/lib/db/schema/planos-dados"
+import { equipamentos } from "@/lib/db/schema/equipamentos"
 import { getSession } from "@/lib/cliente"
 import { eq, sql } from "drizzle-orm"
 import { apiError } from "@/lib/api-error"
@@ -38,10 +40,20 @@ export async function GET(_req: Request, { params }: { params: { clienteId: stri
         .where(eq(sensores.edificacaoId, ed.id))
         .orderBy(sensores.nome)
 
-      return { ...ed, sensores: sensoresList }
+      const planosList = await db.select()
+        .from(planosDados)
+        .where(eq(planosDados.edificacaoId, ed.id))
+        .orderBy(planosDados.createdAt)
+
+      const equipList = await db.select()
+        .from(equipamentos)
+        .where(eq(equipamentos.edificacaoId, ed.id))
+        .orderBy(equipamentos.createdAt)
+
+      return { ...ed, sensores: sensoresList, planosDados: planosList, equipamentos: equipList }
     }))
 
-    const totalMensal = await db.select({
+    const totalSensores = await db.select({
       total: sql<string>`coalesce(sum(${precosSensor.valorMensal}), 0)`,
     })
       .from(precosSensor)
@@ -50,7 +62,32 @@ export async function GET(_req: Request, { params }: { params: { clienteId: stri
       .where(eq(edificacoes.clienteId, clienteId))
       .then(r => r[0]?.total ?? "0")
 
-    return NextResponse.json({ cliente, edificacoes: result, totalMensal })
+    const totalPlanos = await db.select({
+      total: sql<string>`coalesce(sum(${planosDados.valorMensal}), 0)`,
+    })
+      .from(planosDados)
+      .innerJoin(edificacoes, eq(edificacoes.id, planosDados.edificacaoId))
+      .where(sql`${edificacoes.clienteId} = ${clienteId} and ${planosDados.ativo} = 'S'`)
+      .then(r => r[0]?.total ?? "0")
+
+    const totalEquipamentos = await db.select({
+      total: sql<string>`coalesce(sum(${equipamentos.quantidade} * ${equipamentos.valorUnitario}), 0)`,
+    })
+      .from(equipamentos)
+      .innerJoin(edificacoes, eq(edificacoes.id, equipamentos.edificacaoId))
+      .where(sql`${edificacoes.clienteId} = ${clienteId} and ${equipamentos.ativo} = 'S'`)
+      .then(r => r[0]?.total ?? "0")
+
+    const totalMensal = (parseFloat(totalSensores) + parseFloat(totalPlanos) + parseFloat(totalEquipamentos)).toFixed(2)
+
+    return NextResponse.json({
+      cliente,
+      edificacoes: result,
+      totalSensores,
+      totalPlanos,
+      totalEquipamentos,
+      totalMensal,
+    })
   } catch (err) {
     return apiError(err)
   }

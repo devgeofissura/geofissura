@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Building2, Loader2, Printer, Wifi, WifiOff } from "lucide-react"
+import { ArrowLeft, Building2, Loader2, Printer, Wifi, WifiOff, Signal, HardDrive } from "lucide-react"
 
 interface SensorReport {
   id: number
@@ -15,11 +15,31 @@ interface SensorReport {
   valorMensal: string | null
 }
 
+interface PlanoReport {
+  id: number
+  operadora: string
+  descricao: string | null
+  valorMensal: string
+  ativo: string
+  createdAt: string | null
+}
+
+interface EquipamentoReport {
+  id: number
+  tipo: string
+  descricao: string | null
+  quantidade: number
+  valorUnitario: string
+  ativo: string
+}
+
 interface EdificacaoReport {
   id: number
   nome: string
   endereco: string | null
   sensores: SensorReport[]
+  planosDados: PlanoReport[]
+  equipamentos: EquipamentoReport[]
   totalEdificacao: number
 }
 
@@ -98,7 +118,7 @@ export default function RelatorioCobrancaPage() {
         </div>
 
         {/* Resumo */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div className="rounded-lg bg-[var(--bg-secondary)] p-4 text-center">
             <p className="text-2xl font-bold text-[var(--brand)]">{formatCurrency(data.totalGeral)}</p>
             <p className="text-xs text-[var(--text-secondary)]">Total Mensal</p>
@@ -111,6 +131,12 @@ export default function RelatorioCobrancaPage() {
             <p className="text-2xl font-bold">{data.totalSensoresAtivos}</p>
             <p className="text-xs text-[var(--text-secondary)]">Sensores Ativos</p>
           </div>
+          <div className="rounded-lg bg-[var(--bg-secondary)] p-4 text-center">
+            <p className="text-2xl font-bold">
+              {data.edificacoes.reduce((a, e) => a + e.equipamentos.filter(eq => eq.ativo === "S").length, 0)}
+            </p>
+            <p className="text-xs text-[var(--text-secondary)]">Equipamentos</p>
+          </div>
         </div>
 
         {/* Edificações */}
@@ -122,6 +148,7 @@ export default function RelatorioCobrancaPage() {
               {ed.endereco && <span className="text-xs text-[var(--text-secondary)]">— {ed.endereco}</span>}
             </div>
 
+            {/* Sensores */}
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--border)] text-left text-xs text-[var(--text-secondary)]">
@@ -151,13 +178,80 @@ export default function RelatorioCobrancaPage() {
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr className="font-semibold">
-                  <td colSpan={3} className="pt-3 text-right">Total da edificação</td>
-                  <td className="pt-3 text-right text-[var(--brand)]">{formatCurrency(ed.totalEdificacao)}</td>
-                </tr>
-              </tfoot>
             </table>
+
+            {/* Planos de Dados */}
+            {ed.planosDados.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs font-semibold text-[var(--text-secondary)] mb-1 flex items-center gap-1">
+                  <Signal className="h-3 w-3" /> Planos de Dados
+                </p>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--border)] text-left text-xs text-[var(--text-secondary)]">
+                      <th className="pb-1 font-medium">Operadora</th>
+                      <th className="pb-1 font-medium">Descrição</th>
+                      <th className="pb-1 font-medium text-right">Valor Mensal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ed.planosDados.map((p) => (
+                      <tr key={p.id} className="border-b border-[var(--border)]/50">
+                        <td className="py-1">{p.operadora}</td>
+                        <td className="py-1 text-[var(--text-secondary)]">{p.descricao ?? "—"}</td>
+                        <td className="py-1 text-right font-medium">
+                          {p.ativo === "S" ? formatCurrency(parseFloat(p.valorMensal)) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Equipamentos */}
+            {ed.equipamentos.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs font-semibold text-[var(--text-secondary)] mb-1 flex items-center gap-1">
+                  <HardDrive className="h-3 w-3" /> Equipamentos
+                </p>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--border)] text-left text-xs text-[var(--text-secondary)]">
+                      <th className="pb-1 font-medium">Tipo</th>
+                      <th className="pb-1 font-medium">Descrição</th>
+                      <th className="pb-1 font-medium text-right">Qtd</th>
+                      <th className="pb-1 font-medium text-right">Valor Unit.</th>
+                      <th className="pb-1 font-medium text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ed.equipamentos.map((e) => {
+                      const total = e.quantidade * (parseFloat(e.valorUnitario) || 0)
+                      return (
+                        <tr key={e.id} className="border-b border-[var(--border)]/50">
+                          <td className="py-1">{e.tipo}</td>
+                          <td className="py-1 text-[var(--text-secondary)]">{e.descricao ?? "—"}</td>
+                          <td className="py-1 text-right">{e.ativo === "S" ? e.quantidade : "—"}</td>
+                          <td className="py-1 text-right">
+                            {e.ativo === "S" ? formatCurrency(parseFloat(e.valorUnitario)) : "—"}
+                          </td>
+                          <td className="py-1 text-right font-medium">
+                            {e.ativo === "S" ? formatCurrency(total) : "—"}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Total da edificação */}
+            <div className="text-right font-semibold pt-2 border-t border-[var(--border)]">
+              <span className="text-sm">Total da edificação: </span>
+              <span className="text-[var(--brand)]">{formatCurrency(ed.totalEdificacao)}</span>
+            </div>
           </div>
         ))}
 
