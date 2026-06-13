@@ -3,8 +3,9 @@ import { db } from "@/lib/db"
 import { edificacoes } from "@/lib/db/schema/edificacoes"
 import { sensores } from "@/lib/db/schema/sensores"
 import { leituras } from "@/lib/db/schema/leituras"
+import { notificacoes } from "@/lib/db/schema/notificacoes"
 import { eq, and, inArray, sql } from "drizzle-orm"
-import { Building2, Cpu, Activity, AlertTriangle } from "lucide-react"
+import { DashboardCards } from "@/components/dashboard-cards"
 import { ReadingsChart } from "./chart"
 
 export default async function DashboardPage() {
@@ -13,55 +14,40 @@ export default async function DashboardPage() {
     return <p>Não autorizado</p>
   }
 
-  const buildConds = () => {
-    const c: any[] = []
-    if (!isSuper) c.push(eq(edificacoes.clienteId, clienteId!))
+  function clienteFilter(table: any) {
+    const c: any[] = [eq(table.ativo, "S")]
+    if (!isSuper) c.push(eq(table.clienteId, clienteId!))
     return c
   }
-  const sensorConds = () => {
+  function onlyCliente(table: any) {
     const c: any[] = []
-    if (!isSuper) c.push(eq(sensores.clienteId, clienteId!))
-    return c
-  }
-  const leitConds = () => {
-    const c: any[] = []
-    if (!isSuper) c.push(eq(leituras.clienteId, clienteId!))
+    if (!isSuper) c.push(eq(table.clienteId, clienteId!))
     return c
   }
 
-  const [totalEdificacoes] = await db.select({ count: sql<number>`count(*)` })
-    .from(edificacoes)
-    .where(and(...buildConds()))
+  const [[totalEdificacoes], [totalSensores], [totalLeituras], [totalAlertas]] = await Promise.all([
+    db.select({ count: sql<number>`count(*)` }).from(edificacoes).where(and(...clienteFilter(edificacoes))),
+    db.select({ count: sql<number>`count(*)` }).from(sensores).where(and(...clienteFilter(sensores))),
+    db.select({ count: sql<number>`count(*)` }).from(leituras).where(and(...onlyCliente(leituras))),
+    db.select({ count: sql<number>`count(*)` }).from(notificacoes).where(and(...onlyCliente(notificacoes))),
+  ])
 
-  const [totalSensores] = await db.select({ count: sql<number>`count(*)` })
-    .from(sensores)
-    .where(and(...sensorConds()))
-
-  const [totalLeituras] = await db.select({ count: sql<number>`count(*)` })
-    .from(leituras)
-    .where(and(...leitConds()))
-
-  const ultimasLeituras = await db.select()
-    .from(leituras)
-    .where(and(...leitConds()))
-    .orderBy(sql`lida_em DESC`)
-    .limit(50)
+  const [ultimasLeituras, listaEdificacoes, listaSensores] = await Promise.all([
+    db.select().from(leituras).where(and(...onlyCliente(leituras))).orderBy(sql`lida_em DESC`).limit(50),
+    db.select({ id: edificacoes.id, nome: edificacoes.nome }).from(edificacoes).where(and(...clienteFilter(edificacoes))),
+    db.select({ id: sensores.id, nome: sensores.nome, edificacaoId: sensores.edificacaoId }).from(sensores).where(and(...clienteFilter(sensores))),
+  ])
 
   const sensorIds = Array.from(new Set(ultimasLeituras.map((l) => l.sensorId)))
-  const listaSensores = sensorIds.length > 0
-    ? await db.select({ id: sensores.id, nome: sensores.nome })
-        .from(sensores)
-        .where(and(inArray(sensores.id, sensorIds), ...sensorConds()))
-    : []
   const sensorNomes: Record<number, string> = {}
   for (const s of listaSensores) sensorNomes[s.id] = s.nome
 
-  const cards = [
-    { label: "Edificações", value: Number(totalEdificacoes.count), icon: Building2, color: "text-emerald-500" },
-    { label: "Sensores", value: Number(totalSensores.count), icon: Cpu, color: "text-blue-500" },
-    { label: "Leituras", value: Number(totalLeituras.count), icon: Activity, color: "text-violet-500" },
-    { label: "Alertas", value: 0, icon: AlertTriangle, color: "text-amber-500" },
-  ]
+  const counts = {
+    Edificações: Number(totalEdificacoes.count),
+    Sensores: Number(totalSensores.count),
+    Leituras: Number(totalLeituras.count),
+    Alertas: Number(totalAlertas.count),
+  }
 
   return (
     <div className="space-y-6">
@@ -72,26 +58,14 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        {cards.map((card) => {
-          const Icon = card.icon
-          return (
-            <div key={card.label} className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className={`${card.color}`}>
-                  <Icon className="h-8 w-8" />
-                </div>
-                <div>
-                  <p className="text-sm text-[var(--text-secondary)]">{card.label}</p>
-                  <p className="text-3xl font-bold">{card.value}</p>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      <DashboardCards counts={counts} />
 
-      <ReadingsChart data={ultimasLeituras} sensorNomes={sensorNomes} />
+      <ReadingsChart
+        data={ultimasLeituras}
+        sensorNomes={sensorNomes}
+        sensores={listaSensores}
+        edificacoes={listaEdificacoes}
+      />
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-sm">
         <div className="p-4 border-b border-[var(--border)]">
