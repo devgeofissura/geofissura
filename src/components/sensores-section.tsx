@@ -18,14 +18,6 @@ interface SensorItem {
   dados: Record<string, unknown>
 }
 
-const tiposSensor = [
-  "inclinometro",
-  "fissurometro",
-  "termometro",
-  "piezometro",
-  "extensometro",
-]
-
 export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: number; isSuper: boolean }) {
   const [sensores, setSensores] = useState<SensorItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,17 +25,20 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
   const [saving, setSaving] = useState(false)
   const [savingPreco, setSavingPreco] = useState<number | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [tipos, setTipos] = useState<{ id: number; nome: string }[]>([])
 
   function load() {
     setLoading(true)
-    fetch("/api/sensores")
-      .then(r => r.json())
-      .then((lista: SensorItem[]) => {
-        if (Array.isArray(lista)) {
-          setSensores(lista.filter(s => s.edificacaoId === edificacaoId))
-        }
-      })
-      .catch(() => toast.error("Erro ao carregar sensores"))
+    Promise.all([
+      fetch("/api/sensores").then(r => r.json()),
+      fetch("/api/tipos-sensor").then(r => r.json()),
+    ]).then(([lista, tiposData]) => {
+      if (Array.isArray(lista)) {
+        setSensores(lista.filter(s => s.edificacaoId === edificacaoId))
+      }
+      setTipos(tiposData)
+    })
+      .catch(() => toast.error("Erro ao carregar dados"))
       .finally(() => setLoading(false))
   }
 
@@ -136,7 +131,7 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
             <Label htmlFor="tipoSensor">Tipo de Sensor</Label>
             <select id="tipoSensor" name="tipoSensor" required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
               <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
-              {tiposSensor.map(t => <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>)}
+              {tipos.map(t => <option key={t.id} value={t.nome} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t.nome}</option>)}
             </select>
           </div>
           <div className="space-y-1">
@@ -169,7 +164,7 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
                   <div className="space-y-1">
                     <Label>Tipo</Label>
                     <select name="tipoSensor" defaultValue={sensor.tipoSensor} required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
-                      {tiposSensor.map(t => <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>)}
+                      {tipos.map(t => <option key={t.id} value={t.nome} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t.nome}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1">

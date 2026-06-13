@@ -8,21 +8,20 @@ import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-const tiposSensor = [
-  "inclinometro",
-  "fissurometro",
-  "termometro",
-  "piezometro",
-  "extensometro",
-]
-
 export default function NovoSensorPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [edificacoes, setEdificacoes] = useState<{ id: number; nome: string }[]>([])
+  const [tipos, setTipos] = useState<{ id: number; nome: string }[]>([])
 
   useEffect(() => {
-    fetch("/api/edificacoes").then(r => r.json()).then(setEdificacoes).catch(() => {})
+    Promise.all([
+      fetch("/api/edificacoes").then(r => r.json()),
+      fetch("/api/tipos-sensor").then(r => r.json()),
+    ]).then(([edData, tipoData]) => {
+      setEdificacoes(edData)
+      setTipos(tipoData)
+    }).catch(() => {})
   }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -80,8 +79,8 @@ export default function NovoSensorPage() {
           <Label htmlFor="tipoSensor">Tipo</Label>
           <select id="tipoSensor" name="tipoSensor" required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
             <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
-            {tiposSensor.map((t) => (
-              <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>
+            {tipos.map((t) => (
+              <option key={t.id} value={t.nome} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t.nome}</option>
             ))}
           </select>
         </div>

@@ -8,18 +8,11 @@ import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-const tiposSensor = [
-  "inclinometro",
-  "fissurometro",
-  "termometro",
-  "piezometro",
-  "extensometro",
-]
-
 export default function EditarSensorPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
+  const [tipos, setTipos] = useState<{ id: number; nome: string }[]>([])
   const [form, setForm] = useState({
     tipoSensor: "",
     nome: "",
@@ -31,18 +24,21 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
   })
 
   useEffect(() => {
-    fetch(`/api/sensores/${params.id}`)
-      .then((r) => r.json())
-      .then((data) => {
+    Promise.all([
+      fetch(`/api/sensores/${params.id}`).then((r) => r.json()),
+      fetch("/api/tipos-sensor").then((r) => r.json()),
+    ])
+      .then(([sensor, tiposData]) => {
         setForm({
-          tipoSensor: data.tipoSensor ?? "",
-          nome: data.nome ?? "",
-          descricao: data.descricao ?? "",
-          modelo: data.modelo ?? "",
-          unidade: data.unidade ?? "",
-          fabricante: data.fabricante ?? "",
-          valorMensal: data.valorMensal ?? "0",
+          tipoSensor: sensor.tipoSensor ?? "",
+          nome: sensor.nome ?? "",
+          descricao: sensor.descricao ?? "",
+          modelo: sensor.modelo ?? "",
+          unidade: sensor.unidade ?? "",
+          fabricante: sensor.fabricante ?? "",
+          valorMensal: sensor.valorMensal ?? "0",
         })
+        setTipos(tiposData)
         setLoadingData(false)
       })
       .catch(() => {
@@ -101,8 +97,8 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
             className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors"
           >
             <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
-            {tiposSensor.map((t) => (
-              <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>
+            {tipos.map((t) => (
+              <option key={t.id} value={t.nome} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t.nome}</option>
             ))}
           </select>
         </div>

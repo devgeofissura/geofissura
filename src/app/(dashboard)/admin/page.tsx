@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, Plus, Trash2, Shield, ShieldCheck, Building2, Pencil, Check, ArrowLeft, Users, KeyRound } from "lucide-react"
+import { Loader2, Plus, Trash2, Shield, ShieldCheck, Building2, Pencil, Check, ArrowLeft, Users, KeyRound, Cpu } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 
@@ -393,7 +393,7 @@ function ClientesTab() {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<"usuarios" | "clientes">("clientes")
+  const [tab, setTab] = useState<"usuarios" | "clientes" | "tipos">("clientes")
   const { data: session } = useSession()
   const isSuper = session?.user?.role === "SUPER"
   const role = session?.user?.role ?? ""
@@ -431,9 +431,11 @@ export default function AdminPage() {
       <div className="flex gap-2 border-b border-[var(--border)] pb-2">
         <TabButton active={tab === "clientes"} onClick={() => setTab("clientes")}>Clientes</TabButton>
         <TabButton active={tab === "usuarios"} onClick={() => setTab("usuarios")}>Todos Usuários</TabButton>
+        <TabButton active={tab === "tipos"} onClick={() => setTab("tipos")}>Tipos de Sensor</TabButton>
       </div>
       {tab === "clientes" && <ClientesTab />}
       {tab === "usuarios" && <UsuariosGlobalTab />}
+      {tab === "tipos" && <TiposSensorTab />}
     </div>
   )
 }
@@ -533,6 +535,159 @@ function UsuariosGlobalTab() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+interface TipoSensor {
+  id: number
+  nome: string
+  descricao: string | null
+  createdAt: string | null
+}
+
+function TiposSensorTab() {
+  const [tipos, setTipos] = useState<TipoSensor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editNome, setEditNome] = useState("")
+  const [editDescricao, setEditDescricao] = useState("")
+
+  function load() {
+    setLoading(true)
+    fetch("/api/tipos-sensor")
+      .then((r) => r.json())
+      .then(setTipos)
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    const form = new FormData(e.currentTarget)
+    try {
+      const res = await fetch("/api/tipos-sensor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: form.get("nome"), descricao: form.get("descricao") }),
+      })
+      if (!res.ok) throw new Error()
+      toast.success("Tipo criado")
+      setShowForm(false)
+      load()
+    } catch {
+      toast.error("Erro ao criar")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleEditSave(id: number) {
+    try {
+      const res = await fetch(`/api/tipos-sensor/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: editNome, descricao: editDescricao }),
+      })
+      if (!res.ok) throw new Error()
+      toast.success("Tipo atualizado")
+      setEditingId(null)
+      load()
+    } catch {
+      toast.error("Erro ao atualizar")
+    }
+  }
+
+  async function handleDelete(id: number, nome: string) {
+    if (!confirm(`Excluir tipo "${nome}"?`)) return
+    try {
+      await fetch(`/api/tipos-sensor/${id}`, { method: "DELETE" })
+      toast.success("Tipo excluído")
+      load()
+    } catch {
+      toast.error("Erro ao excluir")
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-[var(--text-secondary)]">Tipos de sensor cadastrados</p>
+        <Button onClick={() => setShowForm(!showForm)} size="sm"><Plus className="mr-1 h-4 w-4" />Novo Tipo</Button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleCreate} className="max-w-lg rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-6 shadow-sm space-y-4">
+          <h3 className="font-semibold">Cadastrar Tipo de Sensor</h3>
+          <div className="space-y-2">
+            <Label>Nome</Label>
+            <Input name="nome" required placeholder="Ex: inclinometro" />
+          </div>
+          <div className="space-y-2">
+            <Label>Descrição</Label>
+            <Input name="descricao" placeholder="Descrição opcional" />
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar</Button>
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+          </div>
+        </form>
+      )}
+
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-sm">
+        {loading ? (
+          <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[var(--brand)]" /></div>
+        ) : tipos.length === 0 ? (
+          <div className="p-6 text-center text-sm text-[var(--text-secondary)]">Nenhum tipo cadastrado</div>
+        ) : (
+          <div className="divide-y divide-[var(--border)]">
+            {tipos.map((t) => (
+              <div key={t.id} className="flex items-center justify-between p-4">
+                {editingId === t.id ? (
+                  <div className="flex-1 grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Nome</Label>
+                      <Input value={editNome} onChange={(e) => setEditNome(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Descrição</Label>
+                      <Input value={editDescricao} onChange={(e) => setEditDescricao(e.target.value)} />
+                    </div>
+                    <div className="col-span-2 flex gap-1 justify-end">
+                      <Button size="sm" onClick={() => handleEditSave(t.id)}><Check className="h-3 w-3 mr-1" />Salvar</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancelar</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-9 w-9 rounded-full bg-[var(--brand)]/10 flex items-center justify-center shrink-0">
+                        <Cpu className="h-4 w-4 text-[var(--brand)]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate text-[var(--text-primary)]">{t.nome}</p>
+                        {t.descricao && <p className="text-xs text-[var(--text-secondary)] truncate">{t.descricao}</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingId(t.id); setEditNome(t.nome); setEditDescricao(t.descricao ?? "") }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(t.id, t.nome)} className="text-red-500 hover:text-red-700">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
