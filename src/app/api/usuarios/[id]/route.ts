@@ -18,6 +18,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     const updateData: Record<string, unknown> = {}
     if (body.nome) updateData.nome = body.nome
+    if (body.email) updateData.email = body.email
     if (body.role) updateData.role = body.role
 
     const [atualizado] = await db.update(usuarios)
