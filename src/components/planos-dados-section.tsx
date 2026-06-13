@@ -16,7 +16,7 @@ interface PlanoDados {
   createdAt: string | null
 }
 
-export function PlanosDadosSection({ edificacaoId }: { edificacaoId: number }) {
+export function PlanosDadosSection({ edificacaoId, isSuper }: { edificacaoId: number; isSuper: boolean }) {
   const [planos, setPlanos] = useState<PlanoDados[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -95,12 +95,14 @@ export function PlanosDadosSection({ edificacaoId }: { edificacaoId: number }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Planos de Dados</h2>
-        <Button variant="outline" size="sm" onClick={() => { setShowForm(!showForm); setEditingId(null) }}>
-          <Plus className="mr-1 h-3 w-3" /> Adicionar Plano
-        </Button>
+        {isSuper && (
+          <Button variant="outline" size="sm" onClick={() => { setShowForm(!showForm); setEditingId(null) }}>
+            <Plus className="mr-1 h-3 w-3" /> Adicionar Plano
+          </Button>
+        )}
       </div>
 
-      {showForm && (
+      {isSuper && showForm && (
         <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm space-y-3">
           <div className="space-y-1">
             <Label htmlFor="operadora">Operadora</Label>
@@ -175,14 +177,16 @@ export function PlanosDadosSection({ edificacaoId }: { edificacaoId: number }) {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => { setEditingId(plano.id); setShowForm(false) }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(plano.id)} className="text-red-500 hover:text-red-700">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {isSuper && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingId(plano.id); setShowForm(false) }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(plano.id)} className="text-red-500 hover:text-red-700">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )
             ))}

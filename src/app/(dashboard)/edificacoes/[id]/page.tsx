@@ -83,9 +83,9 @@ export default async function EdificacaoDetalhePage({ params }: Props) {
         )}
       </div>
 
-      <PlanosDadosSection edificacaoId={edificacao.id} />
+      <PlanosDadosSection edificacaoId={edificacao.id} isSuper={isSuper} />
 
-      <EquipamentosSection edificacaoId={edificacao.id} />
+      <EquipamentosSection edificacaoId={edificacao.id} isSuper={isSuper} />
 
       <DocumentosSection edificacaoId={edificacao.id} />
     </div>

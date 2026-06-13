@@ -30,7 +30,7 @@ const tiposEquipamento = [
   "Outro",
 ]
 
-export function EquipamentosSection({ edificacaoId }: { edificacaoId: number }) {
+export function EquipamentosSection({ edificacaoId, isSuper }: { edificacaoId: number; isSuper: boolean }) {
   const [equipamentos, setEquipamentos] = useState<Equipamento[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -113,12 +113,14 @@ export function EquipamentosSection({ edificacaoId }: { edificacaoId: number }) 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Equipamentos</h2>
-        <Button variant="outline" size="sm" onClick={() => { setShowForm(!showForm); setEditingId(null) }}>
-          <Plus className="mr-1 h-3 w-3" /> Adicionar Equipamento
-        </Button>
+        {isSuper && (
+          <Button variant="outline" size="sm" onClick={() => { setShowForm(!showForm); setEditingId(null) }}>
+            <Plus className="mr-1 h-3 w-3" /> Adicionar Equipamento
+          </Button>
+        )}
       </div>
 
-      {showForm && (
+      {isSuper && showForm && (
         <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-sm space-y-3">
           <div className="space-y-1">
             <Label htmlFor="tipo">Tipo</Label>
@@ -209,14 +211,16 @@ export function EquipamentosSection({ edificacaoId }: { edificacaoId: number }) 
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => { setEditingId(eqp.id); setShowForm(false) }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(eqp.id)} className="text-red-500 hover:text-red-700">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {isSuper && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingId(eqp.id); setShowForm(false) }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(eqp.id)} className="text-red-500 hover:text-red-700">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )
             ))}
