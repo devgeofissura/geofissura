@@ -9,6 +9,7 @@ import { toast } from "sonner"
 
 interface SensorItem {
   id: number
+  uuid: string | null
   edificacaoId: number
   tipoSensor: string
   nome: string
@@ -57,6 +58,7 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
         body: JSON.stringify({
           edificacaoId,
           tipoSensor: form.get("tipoSensor"),
+          uuid: form.get("uuid") || null,
           nome: form.get("nome"),
           descricao: form.get("descricao") || null,
           dados: {},
@@ -137,6 +139,10 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
             </select>
           </div>
           <div className="space-y-1">
+            <Label htmlFor="uuid">UUID do ESP32</Label>
+            <Input id="uuid" name="uuid" placeholder="GF-000001" />
+          </div>
+          <div className="space-y-1">
             <Label htmlFor="nome">Nome</Label>
             <Input id="nome" name="nome" placeholder="Inclinômetro Digital" required />
           </div>
@@ -201,6 +207,9 @@ export function SensoresSection({ edificacaoId, isSuper }: { edificacaoId: numbe
                         </span>
                       </div>
                       <p className="font-medium">{sensor.nome}</p>
+                      {sensor.uuid && (
+                        <p className="text-xs font-mono text-[var(--text-secondary)]">UUID: {sensor.uuid}</p>
+                      )}
                       {sensor.descricao && (
                         <p className="text-xs text-[var(--text-secondary)]">{sensor.descricao}</p>
                       )}

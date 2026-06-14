@@ -21,6 +21,7 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
     unidade: "",
     fabricante: "",
     valorMensal: "",
+    uuid: "",
   })
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
           modelo: sensor.modelo ?? "",
           unidade: sensor.unidade ?? "",
           fabricante: sensor.fabricante ?? "",
+          uuid: sensor.uuid ?? "",
           valorMensal: sensor.valorMensal ?? "0",
         })
         setLoadingData(false)
@@ -110,6 +112,10 @@ export default function EditarSensorPage({ params }: { params: { id: string } })
         <div className="space-y-2">
           <Label htmlFor="descricao">Descrição</Label>
           <Input id="descricao" value={form.descricao} onChange={(e) => set("descricao", e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="uuid">UUID do ESP32</Label>
+          <Input id="uuid" value={form.uuid} onChange={(e) => set("uuid", e.target.value)} placeholder="GF-000001" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">

@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, integer, timestamp, text, jsonb, numeric, uuid } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, integer, timestamp, text, jsonb, numeric } from "drizzle-orm/pg-core"
 import { clientes } from "./clientes"
 import { edificacoes } from "./edificacoes"
 
@@ -14,7 +14,7 @@ export const sensores = pgTable("sensores", {
   fabricante: varchar("fabricante", { length: 200 }),
   valorMensal: numeric("valor_mensal", { precision: 12, scale: 2 }).notNull().default("0"),
   dados: jsonb("dados").notNull().default({}),
-  uuid: uuid("uuid").unique().defaultRandom(),
+  uuid: varchar("uuid", { length: 50 }).unique(),
   ativo: varchar("ativo", { length: 1 }).default("S"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
