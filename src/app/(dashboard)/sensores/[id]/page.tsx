@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Pencil, Cpu, Building2, User, Calendar, Ruler, Hash, Package, Factory, DollarSign, AlertTriangle, Trash2, Loader2 } from "lucide-react"
+import { Pencil, Cpu, Building2, User, Calendar, Ruler, Hash, Package, Factory, DollarSign, AlertTriangle, Trash2, Loader2, Fingerprint } from "lucide-react"
 import { SensorReadingsChart } from "./sensor-chart"
 import { toast } from "sonner"
 import { useSession } from "next-auth/react"
@@ -164,6 +164,7 @@ export default function SensorDetalhePage({ params }: { params: { id: string } }
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <InfoCard icon={Hash} label="ID" value={`#${sensor.id}`} />
+        <InfoCard icon={Fingerprint} label="UUID" value={sensor.uuid ?? "-"} />
         <InfoCard icon={Building2} label="Edificação" value={edificacao?.nome ?? "-"} />
         <InfoCard icon={User} label="Cliente" value={cliente?.nome ?? "-"} />
         <InfoCard icon={Calendar} label="Instalação" value={sensor.createdAt ? new Date(sensor.createdAt).toLocaleDateString("pt-BR") : "-"} />

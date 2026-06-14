@@ -18,6 +18,7 @@ export async function GET() {
     if (!isSuper) conditions.push(eq(sensores.clienteId, clienteId!))
     const dados = await db.select({
       id: sensores.id,
+      uuid: sensores.uuid,
       clienteId: sensores.clienteId,
       edificacaoId: sensores.edificacaoId,
       tipoSensor: sensores.tipoSensor,
