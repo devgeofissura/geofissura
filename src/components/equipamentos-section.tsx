@@ -17,22 +17,10 @@ interface Equipamento {
   createdAt: string | null
 }
 
-const tiposEquipamento = [
-  "Módulo WiFi",
-  "Antena WiFi",
-  "Roteador",
-  "Fonte",
-  "Cabo de Rede",
-  "Sensor Repetidor",
-  "Gateway",
-  "Painel Solar",
-  "Bateria",
-  "Outro",
-]
-
 export function EquipamentosSection({ edificacaoId, isSuper }: { edificacaoId: number; isSuper: boolean }) {
   const [equipamentos, setEquipamentos] = useState<Equipamento[]>([])
   const [loading, setLoading] = useState(true)
+  const [tipos, setTipos] = useState<{ id: number; nome: string }[]>([])
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -44,6 +32,10 @@ export function EquipamentosSection({ edificacaoId, isSuper }: { edificacaoId: n
       .then(setEquipamentos)
       .catch(() => toast.error("Erro ao carregar equipamentos"))
       .finally(() => setLoading(false))
+    fetch("/api/tipos-equipamento")
+      .then(r => { if (r.ok) return r.json(); throw new Error() })
+      .then(setTipos)
+      .catch(() => {})
   }
 
   useEffect(() => { load() }, [])
@@ -126,7 +118,7 @@ export function EquipamentosSection({ edificacaoId, isSuper }: { edificacaoId: n
             <Label htmlFor="tipo">Tipo</Label>
 <select id="tipo" name="tipo" required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
             <option value="" className="bg-[var(--bg-primary)] text-[var(--text-primary)]">Selecione...</option>
-            {tiposEquipamento.map(t => <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>)}
+            {tipos.map(t => <option key={t.id} value={t.nome} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t.nome}</option>)}
             </select>
           </div>
           <div className="space-y-1">
@@ -165,7 +157,7 @@ export function EquipamentosSection({ edificacaoId, isSuper }: { edificacaoId: n
                   <div className="space-y-1">
                     <Label>Tipo</Label>
                     <select name="tipo" defaultValue={eqp.tipo} required className="flex h-9 w-full rounded-md border border-input bg-[var(--bg-primary)] text-[var(--text-primary)] px-3 py-1 text-sm shadow-sm transition-colors">
-                      {tiposEquipamento.map(t => <option key={t} value={t} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t}</option>)}
+                      {tipos.map(t => <option key={t.id} value={t.nome} className="bg-[var(--bg-primary)] text-[var(--text-primary)]">{t.nome}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1">
