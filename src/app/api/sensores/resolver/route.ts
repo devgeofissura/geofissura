@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { sensores } from "@/lib/db/schema/sensores"
 import { eq } from "drizzle-orm"
+import { checkGatewayAuth } from "@/lib/gateway-auth"
 
 export async function GET(req: NextRequest) {
+  const auth = checkGatewayAuth(req)
+  if (auth) return auth
+
   try {
     const uuid = req.nextUrl.searchParams.get("uuid")
     if (!uuid) {

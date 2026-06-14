@@ -4,10 +4,13 @@ import { sensores } from "@/lib/db/schema/sensores"
 import { leituras } from "@/lib/db/schema/leituras"
 import { eq } from "drizzle-orm"
 import { apiError } from "@/lib/api-error"
+import { checkGatewayAuth } from "@/lib/gateway-auth"
 
 export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
+  const auth = checkGatewayAuth(req)
+  if (auth) return auth
   try {
     const body = await req.json()
     if (!body.leituras || !Array.isArray(body.leituras) || body.leituras.length === 0) {
